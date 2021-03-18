@@ -1,0 +1,21 @@
+{
+  "name": "calls",
+  "version": "0.1.0",
+  "description": "WebRTC call component",
+  "main": "index.js",
+  "scripts": {
+    "build": "esbuild index.tsx --bundle --minify --outfile=index.js --define:process.env.NODE_ENV=\\\"production\\\""
+  },
+  "author": "",
+  "license": "Unlicense",
+  "devDependencies": {
+    "prettier": "^2.0.4",
+    "tslint": "^6.1.1",
+    "typescript": "^3.8.3"
+  },
+  "dependencies": {
+    "esbuild": "^0.9.0",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1"
+  }
+}

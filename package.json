@@ -1,21 +1,29 @@
 {
-  "name": "calls",
-  "version": "0.1.0",
-  "description": "WebRTC call component",
-  "main": "index.js",
+  "private": true,
+  "type": "module",
   "scripts": {
-    "build": "esbuild index.tsx --bundle --minify --outfile=index.js --define:process.env.NODE_ENV=\\\"production\\\""
+    "vite": "vite --port 3000",
+    "start": "concurrently \"npm run vite\" \"webxdc-dev run http://localhost:3000\"",
+    "fix": "prettier --write .",
+    "check": "tsc && prettier --check .",
+    "build": "tsc && vite build"
   },
-  "author": "",
-  "license": "Unlicense",
   "devDependencies": {
-    "prettier": "^2.0.4",
-    "tslint": "^6.1.1",
-    "typescript": "^3.8.3"
+    "@iconify/json": "^2.2.350",
+    "@preact/preset-vite": "^2.10.1",
+    "@svgr/core": "^8.1.0",
+    "@svgr/plugin-jsx": "^8.1.0",
+    "@types/react": "^19.1.8",
+    "@webxdc/vite-plugins": "latest",
+    "@webxdc/webxdc-dev": "latest",
+    "concurrently": "^9.1.2",
+    "prettier": "latest",
+    "typescript": "latest",
+    "unplugin-icons": "^22.1.0",
+    "vite": "latest",
+    "vite-plugin-singlefile": "^2.2.0"
   },
   "dependencies": {
-    "esbuild": "^0.9.0",
-    "react": "^16.13.1",
-    "react-dom": "^16.13.1"
+    "preact": "^10.26.9"
   }
 }

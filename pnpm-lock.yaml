@@ -32,7 +32,7 @@ importers:
         version: 1.5.1(vite@6.3.5(@types/node@24.0.3)(terser@5.42.0))
       '@webxdc/webxdc-dev':
         specifier: latest
-        version: 0.19.0
+        version: 0.20.0
       concurrently:
         specifier: ^9.1.2
         version: 9.1.2
@@ -1000,8 +1000,8 @@ packages:
   '@webxdc/vite-plugins@1.5.1':
     resolution: {integrity: sha512-MQ+WalngoAVuiOFHiJo0q4XU+iv7AiIN/f52flOZjeI/rHWvGF0YvG8Pbu5ID5TpTsYOEqIlp9wgUa7+fbBmzQ==}
 
-  '@webxdc/webxdc-dev@0.19.0':
-    resolution: {integrity: sha512-UII/ygrClFQdKQpiTkzUjIY7DM0k+FIvbwCSKSfXp7GPMdXFXL2SrB/0Sd/gFiKYQQ2u523ZjfAkN3BaWSOTIg==}
+  '@webxdc/webxdc-dev@0.20.0':
+    resolution: {integrity: sha512-fraaP7c6Msucb9oX8lXB1BNzOe73jRYOUCU3N0/d+nf+Nl1e/1QvSKF0OBbcn/55eyuFIbDBqw+x8s7ZmgOS3Q==}
     hasBin: true
 
   accepts@1.3.8:
@@ -1340,8 +1340,8 @@ packages:
   focus-trap@6.7.3:
     resolution: {integrity: sha512-8xCEKndV4KrseGhFKKKmczVA14yx1/hnmFICPOjcFjToxCJYj/NHH43tPc3YE/PLnLRNZoFug0EcWkGQde/miQ==}
 
-  follow-redirects@1.15.9:
-    resolution: {integrity: sha512-gew4GsXizNgdoRyqmyfMHyAmXsZDk6mHkSxZFCzW9gwlbtOW44CDtYavM+y+72qD/Vq2l550kMF52DT8fOLJqQ==}
+  follow-redirects@1.15.11:
+    resolution: {integrity: sha512-deG2P0JfjrTxl50XGCDyfI97ZGVCxIpfKYmfyrQ54n5FO/0gfIES8C/Psl6kWVDolizcaaxZJnTS0QSMxvnsBQ==}
     engines: {node: '>=4.0'}
     peerDependencies:
       debug: '*'
@@ -2097,8 +2097,8 @@ packages:
       utf-8-validate:
         optional: true
 
-  ws@8.18.2:
-    resolution: {integrity: sha512-DMricUmwGZUVr++AEAe2uiVM7UoO9MAVZMDu05UQOaUII0lp+zOzLLU4Xqh/JvTqklB1T4uELaaPBKyjE1r4fQ==}
+  ws@8.18.3:
+    resolution: {integrity: sha512-PEIGCY5tSlUt50cqyMXfCzX+oOPqN0vuGqWzbcJ2xvnkzkq46oOpz7dQaTDBdfICb4N14+GARUDw2XV2N4tvzg==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
@@ -3163,7 +3163,7 @@ snapshots:
       - supports-color
       - vite
 
-  '@webxdc/webxdc-dev@0.19.0':
+  '@webxdc/webxdc-dev@0.20.0':
     dependencies:
       '@hope-ui/solid': 0.6.7(@stitches/core@1.2.8)(solid-js@1.5.9)(solid-transition-group@0.0.10(solid-js@1.5.9))
       '@stitches/core': 1.2.8
@@ -3183,7 +3183,7 @@ snapshots:
       solid-transition-group: 0.0.10(solid-js@1.5.9)
       toml: 3.0.0
       wait-on: 6.0.1
-      ws: 8.18.2
+      ws: 8.18.3
     transitivePeerDependencies:
       - '@types/express'
       - bufferutil
@@ -3215,7 +3215,7 @@ snapshots:
 
   axios@0.25.0:
     dependencies:
-      follow-redirects: 1.15.9
+      follow-redirects: 1.15.11
     transitivePeerDependencies:
       - debug
 
@@ -3563,7 +3563,7 @@ snapshots:
     dependencies:
       tabbable: 5.3.3
 
-  follow-redirects@1.15.9: {}
+  follow-redirects@1.15.11: {}
 
   forwarded@0.2.0: {}
 
@@ -3633,7 +3633,7 @@ snapshots:
   http-proxy@1.18.1:
     dependencies:
       eventemitter3: 4.0.7
-      follow-redirects: 1.15.9
+      follow-redirects: 1.15.11
       requires-port: 1.0.0
     transitivePeerDependencies:
       - debug
@@ -4248,7 +4248,7 @@ snapshots:
 
   ws@7.5.10: {}
 
-  ws@8.18.2: {}
+  ws@8.18.3: {}
 
   y18n@5.0.8: {}
 

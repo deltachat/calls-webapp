@@ -28,6 +28,7 @@ export default function VideoThumbnail({ videoRef }: Props) {
         height="100%"
         muted
         autoPlay
+        playsInline
         ref={videoRef}
       />
     </div>

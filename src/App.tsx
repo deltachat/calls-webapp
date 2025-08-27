@@ -49,7 +49,7 @@ export default function App() {
   };
 
   return (
-    <div style={{ height: "100vh" }}>
+    <div style={{ height: "100vh", overflow: "hidden" }}>
       <div style={containerStyle}>
         <FullscreenVideo videoRef={incVidRef} />
         <VideoThumbnail videoRef={outVidRef} />
@@ -68,7 +68,7 @@ export default function App() {
       </div>
       <div
         style={{
-          display: "flex",
+          display: inCall ? "none" : "flex",
           alignItems: "center",
           textAlign: "center",
           justifyContent: "center",

@@ -20,7 +20,10 @@ jobs:
       - run: npm install -g pnpm
       - run: pnpm i
       - run: pnpm check
-      - run: pnpm build
+      - if: ${{ !startsWith(github.ref, 'refs/tags/v') || !contains(github.event.ref, '-beta') }}
+        run: pnpm build
+      - if: ${{ startsWith(github.ref, 'refs/tags/v') && contains(github.event.ref, '-beta') }}
+        run: NODE_ENV=debug pnpm build
 
       - name: Release
         uses: softprops/action-gh-release@v2

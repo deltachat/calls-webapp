@@ -48,18 +48,14 @@ export class CallsManager {
         sdp: payload,
       } as RTCSessionDescriptionInit;
       const offerDescription = new RTCSessionDescription(offerObject);
-
-      this.peerConnection.onicecandidate = (e: RTCPeerConnectionIceEvent) => {
-        if (e.candidate == null) {
-          const answer = this.peerConnection.localDescription!.sdp;
-          window.calls.acceptCall(encodeURIComponent(answer));
-        }
-      };
-
       this.peerConnection.setRemoteDescription(offerDescription);
       this.peerConnection.setLocalDescription(
         await this.peerConnection.createAnswer(),
       );
+
+      await iceGatheringComplete(this.peerConnection);
+      const answer = this.peerConnection.localDescription!.sdp;
+      window.calls.acceptCall(encodeURIComponent(answer));
     };
     const onAcceptedCall = (payload: string) => {
       const answerObject = {
@@ -87,23 +83,14 @@ export class CallsManager {
   }
 
   async startCall(): Promise<void> {
-    return new Promise(async (resolve, _reject) => {
-      this.peerConnection.onicecandidate = (
-        event: RTCPeerConnectionIceEvent,
-      ) => {
-        if (event.candidate == null) {
-          const offer = this.peerConnection.localDescription!.sdp;
-          window.calls.startCall(encodeURIComponent(offer));
-          this.state = "ringing";
-          this.onStateChanged(this.state);
-          resolve();
-        }
-      };
-
-      this.peerConnection.setLocalDescription(
-        await this.peerConnection.createOffer(),
-      );
-    });
+    this.peerConnection.setLocalDescription(
+      await this.peerConnection.createOffer(),
+    );
+    await iceGatheringComplete(this.peerConnection);
+    const offer = this.peerConnection.localDescription!.sdp;
+    window.calls.startCall(encodeURIComponent(offer));
+    this.state = "ringing";
+    this.onStateChanged(this.state);
   }
 
   async endCall(): Promise<void> {
@@ -113,4 +100,20 @@ export class CallsManager {
   getState() {
     return this.state;
   }
+}
+
+function iceGatheringComplete(pc: RTCPeerConnection): Promise<void> {
+  if (pc.iceGatheringState === "complete") {
+    return Promise.resolve();
+  }
+
+  return new Promise<void>((r) => {
+    const listener = () => {
+      if (pc.iceGatheringState === "complete") {
+        r();
+        pc.removeEventListener("icegatheringstatechange", listener);
+      }
+    };
+    pc.addEventListener("icegatheringstatechange", listener);
+  });
 }

@@ -2,13 +2,11 @@
 const rtcConfiguration = {
   iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
-    /*
     {
       urls: "turn:c20.testrun.org",
       username: "ohV8aec1",
       credential: "zo3theiY",
-      },
-      */
+    },
   ],
   iceTransportPolicy: "all",
   //iceTransportPolicy: "relay",

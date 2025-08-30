@@ -17,11 +17,42 @@ export type CallState = "connecting" | "ringing" | "in-call";
 export class CallsManager {
   private peerConnection: RTCPeerConnection;
   private state: CallState;
+
+  private iceTricklingDataChannel: RTCDataChannel;
+  /**
+   * Stores local ICE candidates to be sent to the remote peer
+   * when the data channel opens.
+   */
+  private iceTricklingBuffer: Array<RTCIceCandidate | null>;
+
   private onStateChanged = (_state: CallState) => {};
 
   constructor() {
     this.peerConnection = new RTCPeerConnection(rtcConfiguration);
     this.state = "connecting";
+
+    this.iceTricklingBuffer = [];
+    this.iceTricklingDataChannel = this.peerConnection.createDataChannel(
+      "iceTrickling",
+      {
+        negotiated: true,
+        id: 1,
+      },
+    );
+    this.iceTricklingDataChannel.onmessage = (e) => {
+      console.log("received ICE candidate from remote peer", e.data);
+      this.peerConnection.addIceCandidate(JSON.parse(e.data));
+    };
+    this.iceTricklingDataChannel.onopen = () => {
+      console.log(
+        "iceTricklingDataChannel open: sending buffered ICE candidates",
+        this.iceTricklingBuffer,
+      );
+      for (const candidate of this.iceTricklingBuffer) {
+        sendIceCandidateToDataChannel(this.iceTricklingDataChannel, candidate);
+      }
+      this.iceTricklingBuffer = [];
+    };
   }
 
   async init(
@@ -55,6 +86,8 @@ export class CallsManager {
 
       await gatheredEnoughIceP;
       const answer = this.peerConnection.localDescription!.sdp;
+      this.peerConnection.onicecandidate =
+        this.trickleIceOverDataChannel.bind(this);
       window.calls.acceptCall(encodeURIComponent(answer));
     };
     const onAcceptedCall = (payload: string) => {
@@ -89,6 +122,8 @@ export class CallsManager {
     );
     await gatheredEnoughIceP;
     const offer = this.peerConnection.localDescription!.sdp;
+    this.peerConnection.onicecandidate =
+      this.trickleIceOverDataChannel.bind(this);
     window.calls.startCall(encodeURIComponent(offer));
     this.state = "ringing";
     this.onStateChanged(this.state);
@@ -100,6 +135,18 @@ export class CallsManager {
 
   getState() {
     return this.state;
+  }
+
+  private trickleIceOverDataChannel(e: RTCPeerConnectionIceEvent) {
+    if (this.iceTricklingDataChannel.readyState !== "open") {
+      console.log(
+        "Gathered new ICE candidate, but iceTricklingDataChannel is not yet open, will buffer it",
+        e.candidate,
+      );
+      this.iceTricklingBuffer.push(e.candidate);
+      return;
+    }
+    sendIceCandidateToDataChannel(this.iceTricklingDataChannel, e.candidate);
   }
 }
 
@@ -139,7 +186,6 @@ function gatheredEnoughIce(pc: RTCPeerConnection): Promise<void> {
     // The fact that we got a TURN candidate should mean that
     // we are gonna be able to continue signaling over the TURN server,
     // thus we can send the local description now.
-    // TODO actually implement signaling over TURN.
     //
     // TODO can there be multiple "relay" candidates,
     // such that one does _not_ guarantee that we'll succeed
@@ -149,4 +195,14 @@ function gatheredEnoughIce(pc: RTCPeerConnection): Promise<void> {
 
     iceGatheringComplete,
   ]);
+}
+
+function sendIceCandidateToDataChannel(
+  dataChannel: RTCDataChannel,
+  candidate: null | RTCIceCandidate,
+) {
+  console.log("sending ICE candidate to remote peer", candidate);
+  dataChannel.send(
+    JSON.stringify(candidate === null ? candidate : candidate.toJSON()),
+  );
 }

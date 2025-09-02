@@ -10,6 +10,23 @@ const rtcConfiguration = {
   ],
   iceTransportPolicy: "all",
   //iceTransportPolicy: "relay",
+
+  // This is primarily to ensure that we gather only one TURN ICE candidate,
+  // to avoid a situation when we send the local description
+  // after gathering just one candidate without waiting
+  // for the other TURN candidates to get gathered,
+  // resulting in the connection failing, because our WebRTC agent
+  // wanted to use other TURN candidates for the data channel or something.
+  // You may be able to reproduce this on a Chromium browser,
+  // by commenting out this line and replacing `setTimeout(r, 100)`
+  // with `r()` in `gotTurnCandidate` below.
+  //
+  // Either way, this is the preferable policy, as long as it's supported,
+  // and it is. From
+  // https://developer.mozilla.org/en-US/docs/Web/API/RTCDtlsTransport#allocation_of_dtls_transports
+  // > All browsers support bundling, so when both endpoints are browsers,
+  // > you can rest assured that bundling will be used.
+  bundlePolicy: "max-bundle",
 } as RTCConfiguration;
 
 export type CallState = "connecting" | "ringing" | "in-call";

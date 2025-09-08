@@ -1,7 +1,7 @@
 // TURN server:
 const rtcConfiguration = {
   iceServers: [
-    { urls: "stun:stun.l.google.com:19302" },
+    // { urls: "stun:stun.l.google.com:19302" },
     {
       urls: "turn:c20.testrun.org",
       username: "ohV8aec1",

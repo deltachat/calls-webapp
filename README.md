@@ -10,6 +10,7 @@ To integrate into your Delta Chat client you need to provide a
 - `startCall: (payload: string) => void`
 - `acceptCall: (payload: string) => void`
 - `endCall: () => void`
+- `getAvatar: () => string` (returning the chat's avatar image data-URL encoded)
 
 Commands and events are given to the app via URL hash:
 

@@ -6,6 +6,7 @@ import VideoThumbnail from "~/components/VideoThumbnail";
 import FullscreenVideo from "~/components/FullscreenVideo";
 import EndCallButton from "~/components/EndCallButton";
 import AvatarPlaceholder from "~/components/AvatarPlaceholder";
+import AvatarImage from "~/components/AvatarImage";
 
 import "./App.css";
 
@@ -75,7 +76,7 @@ export default function App() {
           height: "100%",
         }}
       >
-        <AvatarPlaceholder />
+        {window.calls.getAvatar? <AvatarImage url={window.calls.getAvatar()} /> : <AvatarPlaceholder />}
       </div>
       <div
         style={{

@@ -19,8 +19,7 @@ Commands are given to the app via URL hash:
 - `#acceptCall=PAYLOAD`: tells the app to auto-accept the incomig offer, generating an answer payload and calling `acceptCall()`, this must be used when the user clicks "Answer" in the incoming call notification.
 - `#onAnswer=PAYLOAD`: notifies the app that the outgoing call was accepted and provides the answer payload
 
-**IMPORTANT:** `PAYLOAD` **must** be base64 encoded before passing
-it to the app in the URL hash.
+**IMPORTANT:** `PAYLOAD` **must** be base64 encoded (NOTE: you might still need to URL-encode the base64 string to be a valid URL hash) before passing it to the app in the URL hash.
 
 ## Contributing
 

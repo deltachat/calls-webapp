@@ -1,13 +1,14 @@
-// TURN server:
+const iceServers = window.calls.getIceServers
+  ? JSON.parse(window.calls.getIceServers())
+  : [
+      {
+        urls: "turn:c20.testrun.org",
+        username: "ohV8aec1",
+        credential: "zo3theiY",
+      },
+    ];
 const rtcConfiguration = {
-  iceServers: [
-    // { urls: "stun:stun.l.google.com:19302" },
-    {
-      urls: "turn:c20.testrun.org",
-      username: "ohV8aec1",
-      credential: "zo3theiY",
-    },
-  ],
+  iceServers,
   iceTransportPolicy: "all",
   //iceTransportPolicy: "relay",
 
@@ -105,7 +106,7 @@ export class CallsManager {
       const answer = this.peerConnection.localDescription!.sdp;
       this.peerConnection.onicecandidate =
         this.trickleIceOverDataChannel.bind(this);
-      window.calls.acceptCall(encodeURIComponent(answer));
+      window.calls.acceptCall(answer);
     };
     const onAcceptedCall = (payload: string) => {
       const answerObject = {
@@ -119,13 +120,19 @@ export class CallsManager {
 
     const onHashChange = async () => {
       const hash = decodeURIComponent(window.location.hash.substring(1));
-      console.log("hash changed", hash);
-      if (hash === "call") {
+      if (hash === "startCall") {
+        console.log("URL hash CMD: ", hash);
         await this.startCall();
-      } else if (hash.startsWith("offer=")) {
-        await onIncomingCall(hash.substring(6));
-      } else if (hash.startsWith("answer=")) {
-        onAcceptedCall(hash.substring(7));
+      } else if (hash.startsWith("acceptCall=")) {
+        const offer = window.atob(hash.substring(11));
+        console.log("URL hash CMD: acceptCall:", offer);
+        await onIncomingCall(offer);
+      } else if (hash.startsWith("onAnswer=")) {
+        const answer = window.atob(hash.substring(9));
+        console.log("URL hash CMD: onAnswer:", answer);
+        onAcceptedCall(answer);
+      } else {
+        console.log("unexpected URL hash: ", hash);
       }
     };
     onHashChange();
@@ -141,7 +148,7 @@ export class CallsManager {
     const offer = this.peerConnection.localDescription!.sdp;
     this.peerConnection.onicecandidate =
       this.trickleIceOverDataChannel.bind(this);
-    window.calls.startCall(encodeURIComponent(offer));
+    window.calls.startCall(offer);
     this.state = "ringing";
     this.onStateChanged(this.state);
   }

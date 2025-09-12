@@ -39,7 +39,8 @@ window.calls = {
 
 window.webxdc.setUpdateListener(
   (update) => {
-    const { cmd, payload, peer } = update.payload;
+    let { cmd, payload, peer } = update.payload;
+    payload = encodeURIComponent(window.btoa(payload));
 
     if (cmd === "end") {
       window.location.hash = "";
@@ -49,10 +50,10 @@ window.webxdc.setUpdateListener(
     if (peer === selfAddr) {
     } else if (cmd === "start") {
       console.log("INCOMING CALL!");
-      window.location.hash = "#offer=" + payload;
+      window.location.hash = "#acceptCall=" + payload;
     } else if (cmd === "accept") {
       console.log("CALL ACCEPTED!");
-      window.location.hash = "#answer=" + payload;
+      window.location.hash = "#onAnswer=" + payload;
     }
     localStorage.maxSerial = update.serial;
   },

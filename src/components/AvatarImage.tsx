@@ -11,7 +11,7 @@ export default function AvatarImage({ url, ...props }: Props) {
     backgroundImage: `url(${url})`,
     backgroundSize: "cover",
     backgroundPosition: "center",
-    ...(props.style || {})
+    ...(props.style || {}),
   };
   return <div {...props}></div>;
 }

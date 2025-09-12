@@ -10,6 +10,7 @@ To integrate into your Delta Chat client you need to provide a
 - `startCall: (payload: string) => void`
 - `acceptCall: (payload: string) => void`
 - `endCall: () => void`
+- `getIceServers: () => string` (returns a JSON string with array of ice server configurations as expected by https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/setConfiguration)
 - `getAvatar: () => string` (returning the chat's avatar image data-URL encoded)
 
 Commands and events are given to the app via URL hash:

@@ -1,13 +1,16 @@
-// TURN server:
+// default ice servers
+const defaultIceServers = [
+  {
+    urls: "turn:c20.testrun.org",
+    username: "ohV8aec1",
+    credential: "zo3theiY",
+  },
+];
+
 const rtcConfiguration = {
-  iceServers: [
-    // { urls: "stun:stun.l.google.com:19302" },
-    {
-      urls: "turn:c20.testrun.org",
-      username: "ohV8aec1",
-      credential: "zo3theiY",
-    },
-  ],
+  iceServers: window.calls.getIceServers
+    ? JSON.parse(window.calls.getIceServers())
+    : defaultIceServers,
   iceTransportPolicy: "all",
   //iceTransportPolicy: "relay",
 

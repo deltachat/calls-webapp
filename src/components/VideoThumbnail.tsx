@@ -6,7 +6,6 @@ const containerStyle = {
   float: "right" as const,
   margin: "15px",
   height: "100px",
-  width: "100px",
   borderRadius: "5px",
   boxShadow:
     "rgba(0, 0, 0, 0.29) 0px 2px 8px 0px, rgba(0, 0, 0, 0.28) 0px 2px 8px 0px",
@@ -23,10 +22,8 @@ export default function VideoThumbnail({ videoRef }: Props) {
         poster="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="
         style={{
           borderRadius: "5px",
-          objectFit: "cover",
           transform: "scaleX(-1)",
         }}
-        width="100%"
         height="100%"
         muted
         autoPlay

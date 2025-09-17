@@ -1,10 +1,12 @@
 const containerStyle = {
-  position: "absolute" as "absolute",
-  right: "15px",
-  top: "15px",
+  // To be on top of the avatar circle, if the screen is really short.
+  position: "relative" as const,
+  zIndex: 1,
+
+  float: "right" as const,
+  margin: "15px",
   height: "100px",
   width: "100px",
-  zIndex: 1,
   imageRendering: "crisp-edges" as "crisp-edges",
   borderRadius: "5px",
   boxShadow:

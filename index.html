@@ -2,6 +2,18 @@
 <html>
   <head>
     <meta charset="utf-8" />
+    <!-- `script-src 'unsafe-inline'` is required because we use
+    "vite-plugin-singlefile".
+    `VITE_DEV_CSP_CONNECT_SRC` is empty in production
+    and is `connect-src 'self'` for development. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none';
+        style-src 'self' 'unsafe-inline';
+        script-src 'self' 'unsafe-inline';
+        img-src 'self' data:;
+        %VITE_DEV_CSP_CONNECT_SRC%"
+    />
     <!-- To prevent (or reduce) white flashing
     until the app has fully loaded. It's in "dark" theme overall,
     so let's mark it as such. -->

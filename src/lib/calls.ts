@@ -19,8 +19,7 @@ const rtcConfiguration = {
   // resulting in the connection failing, because our WebRTC agent
   // wanted to use other TURN candidates for the data channel or something.
   // You may be able to reproduce this on a Chromium browser,
-  // by commenting out this line and replacing `setTimeout(r, 100)`
-  // with `r()` in `gotTurnCandidate` below.
+  // by commenting out this line.
   //
   // Either way, this is the preferable policy, as long as it's supported,
   // and it is. From
@@ -186,9 +185,10 @@ function gatheredEnoughIce(pc: RTCPeerConnection): Promise<void> {
   const gotTurnCandidate = new Promise<void>((r) => {
     const listener = (e: RTCPeerConnectionIceEvent) => {
       if (e.candidate != null && e.candidate.type === "relay") {
-        // Let's wait just a bit (setTimeout),
-        // maybe we'll get more candidates in burst.
-        setTimeout(r, 100);
+        // `setTimeout` to wait just a bit,
+        // just in case we receive more ICE candidates in burst.
+        // But we only expect one, thanks to `bundlePolicy: "max-bundle"`.
+        setTimeout(r, 0);
 
         pc.removeEventListener("icecandidate", listener);
       }

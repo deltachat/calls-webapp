@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useMemo } from "react";
 
 import { CallsManager, CallState } from "~/lib/calls";
 
@@ -10,26 +10,23 @@ import AvatarImage from "~/components/AvatarImage";
 
 import "./App.css";
 
-const manager = new CallsManager();
-
 export default function App() {
-  const [state, setState] = useState<CallState>(manager.getState());
+  const [state, setState] = useState<CallState>(CallsManager.initialState);
   const outVidRef = useRef<HTMLVideoElement | null>(null);
   const incVidRef = useRef<HTMLVideoElement | null>(null);
+  const manager = useMemo(() => {
+    const outStreamPromise = navigator.mediaDevices.getUserMedia({
+      video: true,
+      audio: true,
+    });
+    outStreamPromise.then((s) => {
+      outVidRef.current!.srcObject = s;
+    });
 
-  useEffect(() => {
-    (async () => {
-      const outStream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true,
-      });
-      outVidRef.current!.srcObject = outStream;
-
-      const onIncStream = (incStream: MediaStream) => {
-        incVidRef.current!.srcObject = incStream;
-      };
-      await manager.init(outStream, onIncStream, setState);
-    })();
+    const onIncStream = (incStream: MediaStream) => {
+      incVidRef.current!.srcObject = incStream;
+    };
+    return new CallsManager(outStreamPromise, onIncStream, setState);
   }, []);
 
   const endCall = useCallback(() => {

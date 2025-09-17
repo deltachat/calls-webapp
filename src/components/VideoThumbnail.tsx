@@ -3,7 +3,6 @@ const containerStyle = {
   right: "15px",
   top: "15px",
   height: "100px",
-  width: "100px",
   zIndex: 1,
   imageRendering: "crisp-edges" as "crisp-edges",
   borderRadius: "5px",
@@ -22,10 +21,8 @@ export default function VideoThumbnail({ videoRef }: Props) {
         poster="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="
         style={{
           borderRadius: "5px",
-          objectFit: "cover",
           transform: "scaleX(-1)",
         }}
-        width="100%"
         height="100%"
         muted
         autoPlay

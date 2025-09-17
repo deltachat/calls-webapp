@@ -44,16 +44,11 @@ export default function App() {
   }
 
   const inCall = state === "in-call";
-  const containerStyle = {
-    display: inCall ? "block" : "none",
-    height: "100%",
-  };
 
   return (
     <div style={{ height: "100vh", overflow: "hidden" }}>
-      <div style={containerStyle}>
+      <div style={{ height: "100%" }}>
         <FullscreenVideo videoRef={incVidRef} />
-        <VideoThumbnail videoRef={outVidRef} />
       </div>
 
       <div
@@ -61,11 +56,21 @@ export default function App() {
           position: "absolute",
           top: 0,
           width: "100%",
-          paddingTop: "1em",
-          textAlign: "center",
         }}
       >
-        {status}
+        {!inCall && (
+          <div
+            style={{
+              width: "100%",
+              paddingTop: "1em",
+              textAlign: "center",
+            }}
+          >
+            {status}
+          </div>
+        )}
+
+        <VideoThumbnail videoRef={outVidRef} />
       </div>
       <div
         style={{
@@ -73,7 +78,8 @@ export default function App() {
           alignItems: "center",
           textAlign: "center",
           justifyContent: "center",
-          height: "100%",
+          position: "absolute",
+          inset: 0,
         }}
       >
         {window.calls.getAvatar ? (

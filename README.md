@@ -45,6 +45,11 @@ To test your work in your browser while developing:
 pnpm start
 ```
 
+Open the simulated instances in 2 separate tabs (the "share" button on the instance in the simulator).
+Then add `#startCall` to the end of the URL of one instance.
+
+On macOS on Safari, you may not be able to give access to the camera to two tabs simultaneously; in this case, try Firefox.
+
 ### Building
 
 To build the app for releasing:

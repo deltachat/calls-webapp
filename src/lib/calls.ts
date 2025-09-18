@@ -1,14 +1,5 @@
-const iceServers = window.calls.getIceServers
-  ? JSON.parse(window.calls.getIceServers())
-  : [
-      {
-        urls: "turn:c20.testrun.org",
-        username: "ohV8aec1",
-        credential: "zo3theiY",
-      },
-    ];
-const rtcConfiguration = {
-  iceServers,
+const initialRtcConfiguration = {
+  iceServers: [], // To be set later by `setConfig`.
   iceTransportPolicy: "all",
   //iceTransportPolicy: "relay",
 
@@ -46,6 +37,7 @@ export type CallState = "connecting" | "ringing" | "in-call";
 
 export class CallsManager {
   private peerConnection: RTCPeerConnection;
+  private setIceServersPromise: Promise<void>;
   private state: CallState;
   static initialState = "connecting" as const;
 
@@ -61,7 +53,35 @@ export class CallsManager {
     onIncomingStream: (stream: MediaStream) => void,
     private onStateChanged: (state: CallState) => void,
   ) {
-    this.peerConnection = new RTCPeerConnection(rtcConfiguration);
+    this.peerConnection = new RTCPeerConnection(initialRtcConfiguration);
+
+    const setIceServers = (iceServers: RTCConfiguration["iceServers"]) => {
+      this.peerConnection.setConfiguration({
+        ...initialRtcConfiguration,
+        iceServers: iceServers,
+      });
+    };
+    if (window.calls.getIceServers != undefined) {
+      const ret = window.calls.getIceServers();
+      if (typeof ret === "string") {
+        setIceServers(JSON.parse(ret));
+        this.setIceServersPromise = Promise.resolve();
+      } else {
+        this.setIceServersPromise = ret.then((r) => {
+          setIceServers(JSON.parse(r));
+        });
+      }
+    } else {
+      setIceServers([
+        {
+          urls: "turn:c20.testrun.org",
+          username: "ohV8aec1",
+          credential: "zo3theiY",
+        },
+      ]);
+      this.setIceServersPromise = Promise.resolve();
+    }
+
     this.state = CallsManager.initialState;
 
     this.iceTricklingBuffer = [];
@@ -95,6 +115,7 @@ export class CallsManager {
     };
 
     const onIncomingCall = async (payload: string) => {
+      await this.setIceServersPromise;
       const gatheredEnoughIceP = gatheredEnoughIce(this.peerConnection);
 
       const offerObject = {
@@ -150,6 +171,7 @@ export class CallsManager {
   }
 
   async startCall(): Promise<void> {
+    await this.setIceServersPromise;
     const gatheredEnoughIceP = gatheredEnoughIce(this.peerConnection);
     const outStream = await this.outStreamPromise;
     console.log("getUserMedia() completed");

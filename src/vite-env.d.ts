@@ -6,7 +6,7 @@ declare global {
       startCall: (payload: string) => void;
       acceptCall: (payload: string) => void;
       endCall: () => void;
-      getIceServers: () => string;
+      getIceServers: () => string | Promise<string>;
       getAvatar: () => string;
     };
   }

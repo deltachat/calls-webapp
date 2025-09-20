@@ -154,6 +154,7 @@ export class CallsManager {
   }
 
   async endCall(): Promise<void> {
+    this.peerConnection.close();
     window.calls.endCall();
   }
 

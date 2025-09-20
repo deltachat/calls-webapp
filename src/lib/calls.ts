@@ -124,38 +124,48 @@ export class CallsManager {
     };
 
     const onIncomingCall = async (payload: string) => {
-      await this.setIceServersPromise;
-      const gatheredEnoughIceP = gatheredEnoughIce(this.peerConnection);
+      try {
+        await this.setIceServersPromise;
+        const gatheredEnoughIceP = gatheredEnoughIce(this.peerConnection);
 
-      const offerObject = {
-        type: "offer",
-        sdp: payload,
-      } as RTCSessionDescriptionInit;
-      const offerDescription = new RTCSessionDescription(offerObject);
-      this.peerConnection.setRemoteDescription(offerDescription);
-      const outStream = await outStreamPromise;
-      console.log("getUserMedia() completed");
-      outStream
-        .getTracks()
-        .forEach((track) => this.peerConnection.addTrack(track, outStream));
-      this.peerConnection.setLocalDescription(
-        await this.peerConnection.createAnswer(),
-      );
+        const offerObject = {
+          type: "offer",
+          sdp: payload,
+        } as RTCSessionDescriptionInit;
+        const offerDescription = new RTCSessionDescription(offerObject);
+        this.peerConnection.setRemoteDescription(offerDescription);
+        const outStream = await outStreamPromise;
+        console.log("getUserMedia() completed");
+        outStream
+          .getTracks()
+          .forEach((track) => this.peerConnection.addTrack(track, outStream));
+        this.peerConnection.setLocalDescription(
+          await this.peerConnection.createAnswer(),
+        );
 
-      await gatheredEnoughIceP;
-      const answer = this.peerConnection.localDescription!.sdp;
-      this.peerConnection.onicecandidate =
-        this.trickleIceOverDataChannel.bind(this);
-      window.calls.acceptCall(answer);
+        await gatheredEnoughIceP;
+        const answer = this.peerConnection.localDescription!.sdp;
+        this.peerConnection.onicecandidate =
+          this.trickleIceOverDataChannel.bind(this);
+        window.calls.acceptCall(answer);
+      } catch (error) {
+        this.onFailed();
+        throw error;
+      }
     };
     const onAcceptedCall = (payload: string) => {
-      const answerObject = {
-        type: "answer",
-        sdp: payload,
-      } as RTCSessionDescriptionInit;
-      const answerDescription = new RTCSessionDescription(answerObject);
+      try {
+        const answerObject = {
+          type: "answer",
+          sdp: payload,
+        } as RTCSessionDescriptionInit;
+        const answerDescription = new RTCSessionDescription(answerObject);
 
-      this.peerConnection.setRemoteDescription(answerDescription);
+        this.peerConnection.setRemoteDescription(answerDescription);
+      } catch (error) {
+        this.onFailed();
+        throw error;
+      }
     };
 
     const onHashChange = async () => {
@@ -180,23 +190,28 @@ export class CallsManager {
   }
 
   async startCall(): Promise<void> {
-    await this.setIceServersPromise;
-    const gatheredEnoughIceP = gatheredEnoughIce(this.peerConnection);
-    const outStream = await this.outStreamPromise;
-    console.log("getUserMedia() completed");
-    outStream
-      .getTracks()
-      .forEach((track) => this.peerConnection.addTrack(track, outStream));
-    this.peerConnection.setLocalDescription(
-      await this.peerConnection.createOffer(),
-    );
-    await gatheredEnoughIceP;
-    const offer = this.peerConnection.localDescription!.sdp;
-    this.peerConnection.onicecandidate =
-      this.trickleIceOverDataChannel.bind(this);
-    window.calls.startCall(offer);
-    this.state = "ringing";
-    this.onStateChanged(this.state);
+    try {
+      await this.setIceServersPromise;
+      const gatheredEnoughIceP = gatheredEnoughIce(this.peerConnection);
+      const outStream = await this.outStreamPromise;
+      console.log("getUserMedia() completed");
+      outStream
+        .getTracks()
+        .forEach((track) => this.peerConnection.addTrack(track, outStream));
+      this.peerConnection.setLocalDescription(
+        await this.peerConnection.createOffer(),
+      );
+      await gatheredEnoughIceP;
+      const offer = this.peerConnection.localDescription!.sdp;
+      this.peerConnection.onicecandidate =
+        this.trickleIceOverDataChannel.bind(this);
+      window.calls.startCall(offer);
+      this.state = "ringing";
+      this.onStateChanged(this.state);
+    } catch (error) {
+      this.onFailed();
+      throw error;
+    }
   }
 
   async endCall(): Promise<void> {

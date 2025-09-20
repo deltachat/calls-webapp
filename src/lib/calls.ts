@@ -33,7 +33,7 @@ const initialRtcConfiguration = {
   iceCandidatePoolSize: 1,
 } as RTCConfiguration;
 
-export type CallState = "connecting" | "ringing" | "in-call";
+export type CallState = "connecting" | "ringing" | "in-call" | "failed";
 
 export class CallsManager {
   private peerConnection: RTCPeerConnection;
@@ -114,6 +114,15 @@ export class CallsManager {
       this.onStateChanged(this.state);
     };
 
+    this.peerConnection.onconnectionstatechange = () => {
+      if (this.peerConnection.connectionState === "failed") {
+        // It is possible to re-establish a failed WebRTC connection
+        // (with `restartIce()`),
+        // but core API does not support any more signaling.
+        this.onFailed();
+      }
+    };
+
     const onIncomingCall = async (payload: string) => {
       await this.setIceServersPromise;
       const gatheredEnoughIceP = gatheredEnoughIce(this.peerConnection);
@@ -192,6 +201,16 @@ export class CallsManager {
 
   async endCall(): Promise<void> {
     window.calls.endCall();
+  }
+
+  onFailed() {
+    console.log("onFailed, ending the call soon.");
+    this.state = "failed";
+    this.onStateChanged(this.state);
+
+    // setTimeout(() => {
+    //   this.endCall();
+    // }, 5000);
   }
 
   getState() {

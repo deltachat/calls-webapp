@@ -33,11 +33,20 @@ export default function App() {
     manager.endCall();
   }, [manager]);
 
-  let status = "";
-  if (state === "connecting") {
-    status = "Connecting...";
-  } else if (state === "ringing") {
-    status = "Ringing...";
+  let status: string;
+  switch (state) {
+    case "connecting":
+      status = "Connecting...";
+      break;
+    case "ringing":
+      status = "Ringing...";
+      break;
+    case "in-call":
+      status = "";
+      break;
+    case "failed":
+      status = "Failed";
+      break;
   }
 
   const inCall = state === "in-call";

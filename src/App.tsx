@@ -19,10 +19,21 @@ export default function App() {
 
   useEffect(() => {
     (async () => {
-      const outStream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true,
-      });
+      const outStream = await (async () => {
+        try {
+          return await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: true,
+          });
+        } catch (error) {
+          console.warn(
+            "Failed to getUserMedia with video, will try just audio",
+          );
+          return await navigator.mediaDevices.getUserMedia({
+            audio: true,
+          });
+        }
+      })();
       outVidRef.current!.srcObject = outStream;
 
       const onIncStream = (incStream: MediaStream) => {

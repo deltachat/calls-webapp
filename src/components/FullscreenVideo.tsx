@@ -11,14 +11,7 @@ interface Props {
 export default function FullscreenVideo({ videoRef }: Props) {
   return (
     <div style={containerStyle}>
-      <video
-        style={{ transform: "scaleX(-1)" }}
-        width="100%"
-        height="100%"
-        autoPlay
-        playsInline
-        ref={videoRef}
-      />
+      <video width="100%" height="100%" autoPlay playsInline ref={videoRef} />
     </div>
   );
 }

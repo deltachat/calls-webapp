@@ -5,13 +5,13 @@ const containerStyle = {
 };
 
 interface Props {
-  videoRef: React.RefObject<HTMLVideoElement | null>;
+  videoRef: React.RefObject<HTMLAudioElement | null>;
 }
 
 export default function FullscreenVideo({ videoRef }: Props) {
   return (
     <div style={containerStyle}>
-      <video width="100%" height="100%" autoPlay playsInline ref={videoRef} />
+      <audio autoPlay playsInline ref={videoRef} />
     </div>
   );
 }

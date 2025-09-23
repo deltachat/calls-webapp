@@ -2,7 +2,6 @@ import { useRef, useEffect, useState, useCallback } from "react";
 
 import { CallsManager, CallState } from "~/lib/calls";
 
-import VideoThumbnail from "~/components/VideoThumbnail";
 import FullscreenVideo from "~/components/FullscreenVideo";
 import EndCallButton from "~/components/EndCallButton";
 import AvatarPlaceholder from "~/components/AvatarPlaceholder";
@@ -14,27 +13,13 @@ const manager = new CallsManager();
 
 export default function App() {
   const [state, setState] = useState<CallState>(manager.getState());
-  const outVidRef = useRef<HTMLVideoElement | null>(null);
-  const incVidRef = useRef<HTMLVideoElement | null>(null);
+  const incVidRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     (async () => {
-      const outStream = await (async () => {
-        try {
-          return await navigator.mediaDevices.getUserMedia({
-            video: true,
-            audio: true,
-          });
-        } catch (error) {
-          console.warn(
-            "Failed to getUserMedia with video, will try just audio",
-          );
-          return await navigator.mediaDevices.getUserMedia({
-            audio: true,
-          });
-        }
-      })();
-      outVidRef.current!.srcObject = outStream;
+      const outStream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+      });
 
       const onIncStream = (incStream: MediaStream) => {
         incVidRef.current!.srcObject = incStream;
@@ -64,7 +49,6 @@ export default function App() {
     <div style={{ height: "100vh", overflow: "hidden" }}>
       <div style={containerStyle}>
         <FullscreenVideo videoRef={incVidRef} />
-        <VideoThumbnail videoRef={outVidRef} />
       </div>
 
       <div

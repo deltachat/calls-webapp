@@ -87,11 +87,15 @@ export default function App() {
           height: "100%",
         }}
       >
-        {window.calls.getAvatar ? (
-          <AvatarImage url={window.calls.getAvatar()} />
-        ) : (
+        <div style={{ position: "relative" }}>
           <AvatarPlaceholder />
-        )}
+          {window.calls.getAvatar && (
+            <AvatarImage
+              url={window.calls.getAvatar()}
+              style={{ position: "absolute", inset: 0 }}
+            />
+          )}
+        </div>
       </div>
       <div
         style={{

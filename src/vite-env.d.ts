@@ -7,7 +7,7 @@ declare global {
       acceptCall: (payload: string) => void;
       endCall: () => void;
       getIceServers: () => string;
-      getAvatar: () => string;
+      getAvatar: () => string | null;
     };
   }
 }

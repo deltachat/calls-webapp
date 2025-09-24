@@ -148,6 +148,11 @@ export default function App() {
     margin: "0 1rem",
   };
 
+  const avatarURL = useMemo(
+    () => window.calls.getAvatar && window.calls.getAvatar(),
+    [],
+  );
+
   return (
     <div style={{ height: "100vh", overflow: "hidden" }}>
       <div style={containerStyle}>
@@ -176,11 +181,7 @@ export default function App() {
           height: "100%",
         }}
       >
-        {window.calls.getAvatar ? (
-          <AvatarImage url={window.calls.getAvatar()} />
-        ) : (
-          <AvatarPlaceholder />
-        )}
+        {avatarURL ? <AvatarImage url={avatarURL} /> : <AvatarPlaceholder />}
       </div>
       <div
         style={{

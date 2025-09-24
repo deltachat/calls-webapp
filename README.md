@@ -11,7 +11,7 @@ To integrate into your Delta Chat client you need to provide a
 - `acceptCall: (answerPayload: string) => void` (implementation must call `dc_accept_incoming_call` chatmail core API)
 - `endCall: () => void` (implementation must call `dc_end_call` chatmail core API)
 - `getIceServers: () => string` (returns a JSON string with array of ice server configurations as expected by https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/setConfiguration)
-- `getAvatar: () => string` (returning the chat's avatar image URL; can be a regular URL or a data-URL, ex. `"data:image/png;base64,..."`)
+- `getAvatar: () => string | null` (returning the chat's avatar image URL or null if the chat doesn't have an avatar; the URL can be aa data-URL, ex. `"data:image/png;base64,..."`)
 
 Commands are given to the app via URL hash:
 

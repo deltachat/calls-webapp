@@ -20,8 +20,17 @@ export default function App() {
   const outVidRef = useRef<HTMLVideoElement | null>(null);
   const incVidRef = useRef<HTMLVideoElement | null>(null);
 
+  const enableVideoInitiallyRef = useRef<boolean | null>(null);
+  if (enableVideoInitiallyRef.current == null) {
+    enableVideoInitiallyRef.current = !location.search.includes(
+      "noOutgoingVideoInitially",
+    );
+  }
+  const enableVideoInitially = enableVideoInitiallyRef.current;
+
   const [isOutAudioEnabled, setIsOutAudioEnabled] = useState(true);
-  const [isOutVideoEnabled, setIsOutVideoEnabled] = useState(true);
+  const [isOutVideoEnabled, setIsOutVideoEnabled] =
+    useState(enableVideoInitially);
   const isOutAudioEnabledRef = useRef(isOutAudioEnabled);
   isOutAudioEnabledRef.current = isOutAudioEnabled;
   const isOutVideoEnabledRef = useRef(isOutVideoEnabled);

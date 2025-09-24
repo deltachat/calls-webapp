@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useMemo } from "react";
 
 import { CallsManager, CallState } from "~/lib/calls";
 
@@ -10,37 +10,32 @@ import AvatarImage from "~/components/AvatarImage";
 
 import "./App.css";
 
-const manager = new CallsManager();
-
 export default function App() {
-  const [state, setState] = useState<CallState>(manager.getState());
+  const [state, setState] = useState<CallState>(CallsManager.initialState);
   const outVidRef = useRef<HTMLVideoElement | null>(null);
   const incVidRef = useRef<HTMLVideoElement | null>(null);
-
-  useEffect(() => {
-    (async () => {
-      const outStream = await (async () => {
-        try {
-          return await navigator.mediaDevices.getUserMedia({
-            video: true,
-            audio: true,
-          });
-        } catch (error) {
-          console.warn(
-            "Failed to getUserMedia with video, will try just audio",
-          );
-          return await navigator.mediaDevices.getUserMedia({
-            audio: true,
-          });
-        }
-      })();
-      outVidRef.current!.srcObject = outStream;
-
-      const onIncStream = (incStream: MediaStream) => {
-        incVidRef.current!.srcObject = incStream;
-      };
-      await manager.init(outStream, onIncStream, setState);
+  const manager = useMemo(() => {
+    const outStreamPromise = (async () => {
+      try {
+        return await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: true,
+        });
+      } catch (error) {
+        console.warn("Failed to getUserMedia with video, will try just audio");
+        return await navigator.mediaDevices.getUserMedia({
+          audio: true,
+        });
+      }
     })();
+    outStreamPromise.then((s) => {
+      outVidRef.current!.srcObject = s;
+    });
+
+    const onIncStream = (incStream: MediaStream) => {
+      incVidRef.current!.srcObject = incStream;
+    };
+    return new CallsManager(outStreamPromise, onIncStream, setState);
   }, []);
 
   const endCall = useCallback(() => {

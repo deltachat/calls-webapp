@@ -21,6 +21,10 @@ Commands are given to the app via URL hash:
 
 **IMPORTANT:** `PAYLOAD` **must** be base64 encoded (NOTE: you might still need to URL-encode the base64 string to be a valid URL hash) before passing it to the app in the URL hash.
 
+In order to start the app in audio-only mode initially,
+provide `noOutgoingVideoInitially` in the query (search) string
+of the initial URL, e.g. `/index.html?noOutgoingVideoInitially#startCall`.
+
 ## Contributing
 
 ### Installing Dependencies

@@ -3,10 +3,7 @@ import MaterialSymbolsCallEnd from "~icons/material-symbols/call-end";
 import Button from "~/components/Button";
 
 const containerStyle = {
-  color: "white",
   background: "#cb2233",
-  borderRadius: "50%",
-  fontSize: "1.5em",
 };
 
 interface Props {

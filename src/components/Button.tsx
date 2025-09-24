@@ -1,14 +1,14 @@
+import type React from "react";
 import style from "./Button.module.css";
 
-interface Props {
+type Props = {
   children: React.ReactNode;
-  [key: string]: any;
-}
+} & React.ButtonHTMLAttributes<HTMLButtonElement>;
 
 export default function Button({ children, ...props }: Props) {
   return (
-    <div className={style.btn} {...props}>
+    <button className={style.btn} {...props}>
       {children}
-    </div>
+    </button>
   );
 }

@@ -16,7 +16,12 @@ interface Props {
 export default function EndCallButton({ ...props }: Props) {
   props.style = { ...containerStyle, ...(props.style || {}) };
   return (
-    <Button style={containerStyle} {...props}>
+    <Button
+      aria-label="End call"
+      title="End call"
+      style={containerStyle}
+      {...props}
+    >
       <MaterialSymbolsCallEnd />
     </Button>
   );

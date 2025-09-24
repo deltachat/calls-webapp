@@ -63,6 +63,7 @@ export default function App() {
       </div>
 
       <div
+        role="status"
         style={{
           position: "absolute",
           top: 0,

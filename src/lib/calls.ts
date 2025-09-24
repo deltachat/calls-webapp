@@ -1,12 +1,5 @@
-const iceServers = window.calls.getIceServers
-  ? JSON.parse(window.calls.getIceServers())
-  : [
-      {
-        urls: "turn:c20.testrun.org",
-        username: "ohV8aec1",
-        credential: "zo3theiY",
-      },
-    ];
+const ret = window.calls.getIceServers();
+const iceServers = JSON.parse(typeof ret === "string" ? ret : await ret);
 const rtcConfiguration = {
   iceServers,
   iceTransportPolicy: "all",

@@ -60,25 +60,14 @@ export class CallsManager {
         iceServers: iceServers,
       });
     };
-    if (window.calls.getIceServers != undefined) {
-      const ret = window.calls.getIceServers();
-      if (typeof ret === "string") {
-        setIceServers(JSON.parse(ret));
-        this.setIceServersPromise = Promise.resolve();
-      } else {
-        this.setIceServersPromise = ret.then((r) => {
-          setIceServers(JSON.parse(r));
-        });
-      }
-    } else {
-      setIceServers([
-        {
-          urls: "turn:c20.testrun.org",
-          username: "ohV8aec1",
-          credential: "zo3theiY",
-        },
-      ]);
+    const ret = window.calls.getIceServers();
+    if (typeof ret === "string") {
+      setIceServers(JSON.parse(ret));
       this.setIceServersPromise = Promise.resolve();
+    } else {
+      this.setIceServersPromise = ret.then((r) => {
+        setIceServers(JSON.parse(r));
+      });
     }
 
     this.state = CallsManager.initialState;

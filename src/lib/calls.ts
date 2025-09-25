@@ -1,3 +1,5 @@
+import { logSDP } from "../utils/readable-spd-log";
+
 const initialRtcConfiguration = {
   iceServers: [], // To be set later by `setConfig`.
   iceTransportPolicy: "all",
@@ -125,6 +127,7 @@ export class CallsManager {
       const answer = this.peerConnection.localDescription!.sdp;
       this.peerConnection.onicecandidate =
         this.trickleIceOverDataChannel.bind(this);
+      logSDP("Answering incoming call with answer:", answer);
       window.calls.acceptCall(answer);
     };
     const onAcceptedCall = (payload: string) => {
@@ -139,16 +142,20 @@ export class CallsManager {
 
     const onHashChange = async () => {
       const hash = decodeURIComponent(window.location.hash.substring(1));
+      if (!hash || hash.length === 0) {
+        console.log("empty URL hash: ", window.location.href);
+        return;
+      }
       if (hash === "startCall") {
         console.log("URL hash CMD: ", hash);
         await this.startCall();
       } else if (hash.startsWith("acceptCall=")) {
         const offer = window.atob(hash.substring(11));
-        console.log("URL hash CMD: acceptCall:", offer);
+        logSDP("Incoming call with offer:", offer);
         await onIncomingCall(offer);
       } else if (hash.startsWith("onAnswer=")) {
         const answer = window.atob(hash.substring(9));
-        console.log("URL hash CMD: onAnswer:", answer);
+        logSDP("Outgoing call was accepted with answer:", answer);
         onAcceptedCall(answer);
       } else {
         console.log("unexpected URL hash: ", hash);
@@ -173,6 +180,7 @@ export class CallsManager {
     const offer = this.peerConnection.localDescription!.sdp;
     this.peerConnection.onicecandidate =
       this.trickleIceOverDataChannel.bind(this);
+    logSDP("Start outgoing call with offer:", offer);
     window.calls.startCall(offer);
     this.state = "ringing";
     this.onStateChanged(this.state);

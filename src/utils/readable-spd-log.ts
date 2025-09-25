@@ -101,9 +101,7 @@ function parseSDP(sdpContent: string): SDPSummary | null {
     console.log("Invalid SDP content");
     return null;
   }
-  const lines = sdpContent
-    .split("\n")
-    .map((line) => line.trim());
+  const lines = sdpContent.split("\n").map((line) => line.trim());
 
   const summary: SDPSummary = {
     session: {},

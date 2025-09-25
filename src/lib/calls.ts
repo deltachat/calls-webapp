@@ -104,7 +104,7 @@ export class CallsManager {
       this.onStateChanged(this.state);
     };
 
-    const onIncomingCall = async (payload: string) => {
+    const acceptCall = async (payload: string) => {
       await this.setIceServersPromise;
       const gatheredEnoughIceP = gatheredEnoughIce(this.peerConnection);
 
@@ -130,7 +130,7 @@ export class CallsManager {
       logSDP("Answering incoming call with answer:", answer);
       window.calls.acceptCall(answer);
     };
-    const onAcceptedCall = (payload: string) => {
+    const onAnswer = (payload: string) => {
       const answerObject = {
         type: "answer",
         sdp: payload,
@@ -152,11 +152,11 @@ export class CallsManager {
       } else if (hash.startsWith("acceptCall=")) {
         const offer = window.atob(hash.substring(11));
         logSDP("Incoming call with offer:", offer);
-        await onIncomingCall(offer);
+        await acceptCall(offer);
       } else if (hash.startsWith("onAnswer=")) {
         const answer = window.atob(hash.substring(9));
         logSDP("Outgoing call was accepted with answer:", answer);
-        onAcceptedCall(answer);
+        onAnswer(answer);
       } else {
         console.log("unexpected URL hash: ", hash);
       }

@@ -34,13 +34,19 @@ const initialRtcConfiguration = {
   iceCandidatePoolSize: 1,
 } as RTCConfiguration;
 
-export type CallState = "connecting" | "ringing" | "in-call";
+export type CallState =
+  | "promptingUserToAcceptCall"
+  | "connecting"
+  | "ringing"
+  | "in-call";
 
 export class CallsManager {
   private peerConnection: RTCPeerConnection;
   private setIceServersPromise: Promise<void>;
   private state: CallState;
   static initialState = "connecting" as const;
+
+  resolveCallAcceptedPromise?: (accepted: boolean) => void;
 
   private iceTricklingDataChannel: RTCDataChannel;
   /**
@@ -104,7 +110,10 @@ export class CallsManager {
       this.onStateChanged(this.state);
     };
 
-    const onIncomingCall = async (payload: string) => {
+    const acceptCall = async (payload: string) => {
+      this.state = "connecting";
+      this.onStateChanged(this.state);
+
       await this.setIceServersPromise;
       const gatheredEnoughIceP = gatheredEnoughIce(this.peerConnection);
 
@@ -130,7 +139,7 @@ export class CallsManager {
       logSDP("Answering incoming call with answer:", answer);
       window.calls.acceptCall(answer);
     };
-    const onAcceptedCall = (payload: string) => {
+    const onAnswer = (payload: string) => {
       const answerObject = {
         type: "answer",
         sdp: payload,
@@ -146,17 +155,54 @@ export class CallsManager {
         console.log("empty URL hash: ", window.location.href);
         return;
       }
+
+      // A new command, most likely `#acceptCall`, has been issued.
+      // Let's interrupt the previously started `#offerIncomingCall`,
+      // if any.
+      this.resolveCallAcceptedPromise?.(false);
+
       if (hash === "startCall") {
         console.log("URL hash CMD: ", hash);
         await this.startCall();
+      } else if (hash.startsWith("offerIncomingCall=")) {
+        const offer = window.atob(hash.split("offerIncomingCall=", 2)[1]);
+        logSDP("Incoming call (with user prompt) with offer:", offer);
+
+        this.state = "promptingUserToAcceptCall";
+        this.onStateChanged(this.state);
+
+        // Wait for the user to accept the call, do _not_ do anything
+        // with the other party's offer yet,
+        // i.e. don't establish the connection, for privacy reasons.
+        const accepted: boolean = await new Promise((r) => {
+          const fn = (val: boolean) => {
+            r(val);
+            if (this.resolveCallAcceptedPromise === fn) {
+              this.resolveCallAcceptedPromise = undefined;
+            }
+          };
+          this.resolveCallAcceptedPromise = fn;
+        });
+        console.log(
+          "Accept call prompt resolved: " +
+            (accepted ? "accepted" : "not accepted"),
+        );
+
+        if (!accepted) {
+          // "Not accepted" doesn't mean "declined".
+          // If "declined", `window.calls.endCall()` will be called
+          // in a separate place.
+          return;
+        }
+        await acceptCall(offer);
       } else if (hash.startsWith("acceptCall=")) {
         const offer = window.atob(hash.substring(11));
         logSDP("Incoming call with offer:", offer);
-        await onIncomingCall(offer);
+        await acceptCall(offer);
       } else if (hash.startsWith("onAnswer=")) {
         const answer = window.atob(hash.substring(9));
         logSDP("Outgoing call was accepted with answer:", answer);
-        onAcceptedCall(answer);
+        onAnswer(answer);
       } else {
         console.log("unexpected URL hash: ", hash);
       }
@@ -186,9 +232,19 @@ export class CallsManager {
     this.onStateChanged(this.state);
   }
 
+  acceptCall() {
+    if (this.resolveCallAcceptedPromise == undefined) {
+      console.warn("acceptCall invoked, but we were not waiting for it");
+      return;
+    }
+    this.resolveCallAcceptedPromise(true);
+  }
+
   async endCall(): Promise<void> {
     this.peerConnection.close();
     window.calls.endCall();
+
+    this.resolveCallAcceptedPromise?.(false);
   }
 
   getState() {

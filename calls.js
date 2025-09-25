@@ -50,7 +50,9 @@ window.webxdc.setUpdateListener(
     if (peer === selfAddr) {
     } else if (cmd === "start") {
       console.log("INCOMING CALL!");
-      window.location.hash = "#acceptCall=" + payload;
+      const autoAccept = false;
+      window.location.hash =
+        (autoAccept ? "#acceptCall=" : "#offerIncomingCall=") + payload;
     } else if (cmd === "accept") {
       console.log("CALL ACCEPTED!");
       window.location.hash = "#onAnswer=" + payload;

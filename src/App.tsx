@@ -8,6 +8,7 @@ import EndCallButton from "~/components/EndCallButton";
 import AvatarPlaceholder from "~/components/AvatarPlaceholder";
 import AvatarImage from "~/components/AvatarImage";
 import Button from "~/components/Button";
+import MaterialSymbolsCall from "~icons/material-symbols/call";
 import MaterialSymbolsVideocam from "~icons/material-symbols/videocam";
 import MaterialSymbolsVideocamOff from "~icons/material-symbols/videocam-off";
 import MaterialSymbolsMic from "~icons/material-symbols/mic";
@@ -119,15 +120,27 @@ export default function App() {
   const outStreamHasVideoTrack =
     outStream == undefined || outStream.getVideoTracks().length >= 1;
 
+  const acceptCall: null | (() => void) =
+    state === "promptingUserToAcceptCall" ? () => manager.acceptCall() : null;
+
   const endCall = useCallback(() => {
     manager.endCall();
   }, [manager]);
 
-  let status = "";
-  if (state === "connecting") {
-    status = "Connecting...";
-  } else if (state === "ringing") {
-    status = "Ringing...";
+  let status: string;
+  switch (state) {
+    case "promptingUserToAcceptCall":
+      status = "Incoming call";
+      break;
+    case "connecting":
+      status = "Connecting...";
+      break;
+    case "ringing":
+      status = "Ringing...";
+      break;
+    case "in-call":
+      status = "";
+      break;
   }
 
   const inCall = state === "in-call";
@@ -145,7 +158,7 @@ export default function App() {
     color: "white",
     borderRadius: "50%",
     fontSize: "1.5em",
-    margin: "0 1rem",
+    margin: "0.25em 0.625em",
   };
 
   return (
@@ -189,11 +202,24 @@ export default function App() {
       <div
         style={{
           position: "absolute",
-          bottom: "1em",
+          bottom: "0.75em",
           width: "100%",
           textAlign: "center",
         }}
       >
+        {acceptCall != null && (
+          <Button
+            aria-label="Answer call"
+            title="Answer call"
+            onClick={acceptCall}
+            style={{
+              backgroundColor: "#00b000",
+              ...buttonsStyle,
+            }}
+          >
+            <MaterialSymbolsCall />
+          </Button>
+        )}
         <Button
           aria-label={toggleAudioLabel}
           title={toggleAudioLabel}

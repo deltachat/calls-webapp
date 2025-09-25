@@ -16,7 +16,8 @@ To integrate into your Delta Chat client you need to provide a
 Commands are given to the app via URL hash:
 
 - `#startCall`: tells the app to generate an offer payload and call `startCall()`, this is how the app should be open when the user is starting an outgoing call.
-- `#acceptCall=PAYLOAD`: tells the app to auto-accept the incoming offer, generating an answer payload and calling `acceptCall()`, this must be used when the user clicks "Answer" in the incoming call notification.
+- `#offerIncomingCall=PAYLOAD`: tells the app to show the "Incoming call. Answer?" screen. Then, if the user clicks "Answer", generate a WebRTC answer to the offer provided in `PAYLOAD`, and call `window.calls.acceptCall(webrtcAnswer)`. If the user declined the call, the app will invoke `window.calls.endCall`.
+- `#acceptCall=PAYLOAD`: same as `#offerIncomingCall`, but doesn't show the "Incoming call. Answer?" screen and instead automatically and immediately accepts the call.
 - `#onAnswer=PAYLOAD`: notifies the app that the outgoing call was accepted and provides the answer payload
 
 **IMPORTANT:** `PAYLOAD` **must** be base64 encoded (NOTE: you might still need to URL-encode the base64 string to be a valid URL hash) before passing it to the app in the URL hash.

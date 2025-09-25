@@ -123,6 +123,36 @@ export default function App() {
   const acceptCall: null | (() => void) =
     state === "promptingUserToAcceptCall" ? () => manager.acceptCall() : null;
 
+  // Disable the "Answer call" button for a moment,
+  // in case the "Incoming call" window with this app popped up suddenly
+  // and the user was about to click something in another window that is now
+  // behind the "Answer call" button.
+  // const [acceptCallTempDisabled, setAcceptCallTempDisabled] = useState(true);
+  const showAcceptCall = acceptCall != null;
+  const prevShowAcceptCall = useRef<null | boolean>(null);
+  const [acceptCallDisabledTimeout, setAcceptCallTempDisabledTimeout] =
+    useState<number | null>(null);
+  const acceptCallDisabled = acceptCallDisabledTimeout != null;
+  if (showAcceptCall !== prevShowAcceptCall.current) {
+    prevShowAcceptCall.current = showAcceptCall;
+
+    // We don't expect users to be able to intentionally click the button
+    // within this amount of time.
+    // Even if they expect the call, they will probably want to check
+    // the caller's name first, whether the camera is enabled,
+    // and how they look in the camera.
+    // Anyways, the worst that can happen is that they have to
+    // click the button again.
+    const humanReactionTimeMs = 400;
+
+    acceptCallDisabledTimeout && clearTimeout(acceptCallDisabledTimeout);
+    setAcceptCallTempDisabledTimeout(
+      setTimeout(() => {
+        setAcceptCallTempDisabledTimeout(null);
+      }, humanReactionTimeMs),
+    );
+  }
+
   const endCall = useCallback(() => {
     manager.endCall();
   }, [manager]);
@@ -212,9 +242,12 @@ export default function App() {
             aria-label="Answer call"
             title="Answer call"
             onClick={acceptCall}
+            disabled={acceptCallDisabled}
             style={{
               backgroundColor: "#00b000",
               ...buttonsStyle,
+              // TODO also apply `cursor` to the button's children elements.
+              cursor: acceptCallDisabled ? "wait" : undefined,
             }}
           >
             <MaterialSymbolsCall />

@@ -409,6 +409,6 @@ export function logSDP(context: string, sdpContent: string): void {
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
-    console.error("Error parsing SDP:", errorMessage);
+    console.error(context, `Error parsing SDP: ${errorMessage}`);
   }
 }

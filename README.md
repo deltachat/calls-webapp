@@ -10,8 +10,8 @@ To integrate into your Delta Chat client you need to provide a
 - `startCall: (offerPayload: string) => void` (implementation must call `dc_place_outgoing_call` chatmail core API)
 - `acceptCall: (answerPayload: string) => void` (implementation must call `dc_accept_incoming_call` chatmail core API)
 - `endCall: () => void` (implementation must call `dc_end_call` chatmail core API)
-- `getIceServers: () => string` (returns a JSON string with array of ice server configurations as expected by https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/setConfiguration)
-- `getAvatar: () => string` (returning the chat's avatar image data-URL encoded, ex. `"data:image/png;base64,..."`)
+- `getIceServers: () => string | Promise<string>` (returns a JSON string with array of ice server configurations as expected by https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/setConfiguration)
+- `getAvatar: () => string` (returning the chat's avatar image URL; can be a regular URL or a data-URL, ex. `"data:image/png;base64,..."`)
 
 Commands are given to the app via URL hash:
 
@@ -20,6 +20,10 @@ Commands are given to the app via URL hash:
 - `#onAnswer=PAYLOAD`: notifies the app that the outgoing call was accepted and provides the answer payload
 
 **IMPORTANT:** `PAYLOAD` **must** be base64 encoded (NOTE: you might still need to URL-encode the base64 string to be a valid URL hash) before passing it to the app in the URL hash.
+
+In order to start the app in audio-only mode initially,
+provide `noOutgoingVideoInitially` in the query (search) string
+of the initial URL, e.g. `/index.html?noOutgoingVideoInitially#startCall`.
 
 ## Contributing
 

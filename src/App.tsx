@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useMemo, useEffect } from "react";
 
 import { CallsManager, CallState } from "~/lib/calls";
 
@@ -7,41 +7,117 @@ import FullscreenVideo from "~/components/FullscreenVideo";
 import EndCallButton from "~/components/EndCallButton";
 import AvatarPlaceholder from "~/components/AvatarPlaceholder";
 import AvatarImage from "~/components/AvatarImage";
+import Button from "~/components/Button";
+import MaterialSymbolsVideocam from "~icons/material-symbols/videocam";
+import MaterialSymbolsVideocamOff from "~icons/material-symbols/videocam-off";
+import MaterialSymbolsMic from "~icons/material-symbols/mic";
+import MaterialSymbolsMicOff from "~icons/material-symbols/mic-off";
 
 import "./App.css";
 
-const manager = new CallsManager();
-
 export default function App() {
-  const [state, setState] = useState<CallState>(manager.getState());
+  const [state, setState] = useState<CallState>(CallsManager.initialState);
   const outVidRef = useRef<HTMLVideoElement | null>(null);
   const incVidRef = useRef<HTMLVideoElement | null>(null);
 
-  useEffect(() => {
-    (async () => {
-      const outStream = await (async () => {
-        try {
-          return await navigator.mediaDevices.getUserMedia({
-            video: true,
-            audio: true,
-          });
-        } catch (error) {
-          console.warn(
-            "Failed to getUserMedia with video, will try just audio",
-          );
-          return await navigator.mediaDevices.getUserMedia({
-            audio: true,
-          });
-        }
-      })();
-      outVidRef.current!.srcObject = outStream;
+  const enableVideoInitiallyRef = useRef<boolean | null>(null);
+  if (enableVideoInitiallyRef.current == null) {
+    enableVideoInitiallyRef.current = !location.search.includes(
+      "noOutgoingVideoInitially",
+    );
+  }
+  const enableVideoInitially = enableVideoInitiallyRef.current;
 
-      const onIncStream = (incStream: MediaStream) => {
-        incVidRef.current!.srcObject = incStream;
-      };
-      await manager.init(outStream, onIncStream, setState);
-    })();
+  const [isOutAudioEnabled, setIsOutAudioEnabled] = useState(true);
+  const [isOutVideoEnabled, setIsOutVideoEnabled] =
+    useState(enableVideoInitially);
+  const isOutAudioEnabledRef = useRef(isOutAudioEnabled);
+  isOutAudioEnabledRef.current = isOutAudioEnabled;
+  const isOutVideoEnabledRef = useRef(isOutVideoEnabled);
+  isOutVideoEnabledRef.current = isOutVideoEnabled;
+
+  const outStreamPromise = useMemo(async () => {
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
+      });
+    } catch (error) {
+      console.warn("Failed to getUserMedia with video, will try just audio");
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+      });
+    }
+
+    // Make sure to set the initial `enabled` values
+    // before we even from this async function,
+    // to make sure that we don't accidentally send a frame or two.
+    stream
+      .getAudioTracks()
+      .forEach((t) => (t.enabled = isOutAudioEnabledRef.current));
+    stream
+      .getVideoTracks()
+      .forEach((t) => (t.enabled = isOutVideoEnabledRef.current));
+
+    return stream;
   }, []);
+  const [outStream, setOutStream] = useState<MediaStream | null>(null);
+  useEffect(() => {
+    let outdated = false;
+
+    setOutStream(null);
+    outStreamPromise.then((s) => {
+      if (!outdated) {
+        setOutStream(s);
+      }
+    });
+
+    return () => {
+      outdated = true;
+    };
+  }, [outStreamPromise]);
+
+  if (
+    outStream &&
+    outVidRef.current &&
+    outVidRef.current.srcObject !== outStream
+  ) {
+    outVidRef.current.srcObject = outStream;
+  }
+
+  const manager = useMemo(() => {
+    const onIncStream = (incStream: MediaStream) => {
+      incVidRef.current!.srcObject = incStream;
+    };
+    return new CallsManager(outStreamPromise, onIncStream, setState);
+  }, [outStreamPromise]);
+
+  useEffect(() => {
+    if (outStream == undefined) {
+      return;
+    }
+
+    const enableOrDisableTracks = () => {
+      outStream
+        .getAudioTracks()
+        .forEach((t) => (t.enabled = isOutAudioEnabled));
+      outStream
+        .getVideoTracks()
+        .forEach((t) => (t.enabled = isOutVideoEnabled));
+    };
+    enableOrDisableTracks();
+
+    outStream.addEventListener("addtrack", enableOrDisableTracks);
+    outStream.addEventListener("removetrack", enableOrDisableTracks);
+    return () => {
+      outStream.removeEventListener("addtrack", enableOrDisableTracks);
+      outStream.removeEventListener("removetrack", enableOrDisableTracks);
+    };
+  }, [outStream, isOutAudioEnabled, isOutVideoEnabled]);
+
+  const outStreamHasVideoTrack =
+    outStream == undefined || outStream.getVideoTracks().length >= 1;
 
   const endCall = useCallback(() => {
     manager.endCall();
@@ -60,6 +136,18 @@ export default function App() {
     height: "100%",
   };
 
+  const toggleAudioLabel = isOutAudioEnabled
+    ? "Mute microphone"
+    : "Unmute microphone";
+  const toggleVideoLabel = isOutVideoEnabled ? "Stop camera" : "Start camera";
+
+  const buttonsStyle = {
+    color: "white",
+    borderRadius: "50%",
+    fontSize: "1.5em",
+    margin: "0 1rem",
+  };
+
   return (
     <div style={{ height: "100vh", overflow: "hidden" }}>
       <div style={containerStyle}>
@@ -68,6 +156,7 @@ export default function App() {
       </div>
 
       <div
+        role="status"
         style={{
           position: "absolute",
           top: 0,
@@ -87,11 +176,15 @@ export default function App() {
           height: "100%",
         }}
       >
-        {window.calls.getAvatar ? (
-          <AvatarImage url={window.calls.getAvatar()} />
-        ) : (
+        <div style={{ position: "relative" }}>
           <AvatarPlaceholder />
-        )}
+          {window.calls.getAvatar && (
+            <AvatarImage
+              url={window.calls.getAvatar()}
+              style={{ position: "absolute", inset: 0 }}
+            />
+          )}
+        </div>
       </div>
       <div
         style={{
@@ -101,7 +194,33 @@ export default function App() {
           textAlign: "center",
         }}
       >
-        <EndCallButton onClick={endCall} />
+        <Button
+          aria-label={toggleAudioLabel}
+          title={toggleAudioLabel}
+          onClick={() => setIsOutAudioEnabled((v) => !v)}
+          style={buttonsStyle}
+        >
+          {isOutAudioEnabled ? (
+            <MaterialSymbolsMic />
+          ) : (
+            <MaterialSymbolsMicOff />
+          )}
+        </Button>
+        {outStreamHasVideoTrack && (
+          <Button
+            aria-label={toggleVideoLabel}
+            title={toggleVideoLabel}
+            onClick={() => setIsOutVideoEnabled((v) => !v)}
+            style={buttonsStyle}
+          >
+            {isOutVideoEnabled ? (
+              <MaterialSymbolsVideocam />
+            ) : (
+              <MaterialSymbolsVideocamOff />
+            )}
+          </Button>
+        )}
+        <EndCallButton onClick={endCall} style={buttonsStyle} />
       </div>
     </div>
   );

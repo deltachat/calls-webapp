@@ -1,14 +1,7 @@
-const iceServers = window.calls.getIceServers
-  ? JSON.parse(window.calls.getIceServers())
-  : [
-      {
-        urls: "turn:c20.testrun.org",
-        username: "ohV8aec1",
-        credential: "zo3theiY",
-      },
-    ];
-const rtcConfiguration = {
-  iceServers,
+import { logSDP } from "../utils/readable-spd-log";
+
+const initialRtcConfiguration = {
+  iceServers: [], // To be set later by `setConfig`.
   iceTransportPolicy: "all",
   //iceTransportPolicy: "relay",
 
@@ -27,13 +20,27 @@ const rtcConfiguration = {
   // > All browsers support bundling, so when both endpoints are browsers,
   // > you can rest assured that bundling will be used.
   bundlePolicy: "max-bundle",
+  // This should make the connection establish faster,
+  // by gathering candidates prior to the `setLocalDescription` call.
+  // `setLocalDescription` call.
+  // Most notably, the `setLocalDescription` call is not performed
+  // until `getUserMedia` resolves,
+  // and sometimes it takes up to a second or two.
+  //
+  // TODO figure out what would be the appropriate number for this.
+  // For example, https://github.com/webrtc/FirebaseRTC/issues/7#issue-587573275
+  // says:
+  // > a setting of more than one usually does not make sense
+  iceCandidatePoolSize: 1,
 } as RTCConfiguration;
 
 export type CallState = "connecting" | "ringing" | "in-call";
 
 export class CallsManager {
   private peerConnection: RTCPeerConnection;
+  private setIceServersPromise: Promise<void>;
   private state: CallState;
+  static initialState = "connecting" as const;
 
   private iceTricklingDataChannel: RTCDataChannel;
   /**
@@ -42,11 +49,30 @@ export class CallsManager {
    */
   private iceTricklingBuffer: Array<RTCIceCandidate | null>;
 
-  private onStateChanged = (_state: CallState) => {};
+  constructor(
+    private outStreamPromise: Promise<MediaStream>,
+    onIncomingStream: (stream: MediaStream) => void,
+    private onStateChanged: (state: CallState) => void,
+  ) {
+    this.peerConnection = new RTCPeerConnection(initialRtcConfiguration);
 
-  constructor() {
-    this.peerConnection = new RTCPeerConnection(rtcConfiguration);
-    this.state = "connecting";
+    const setIceServers = (iceServers: RTCConfiguration["iceServers"]) => {
+      this.peerConnection.setConfiguration({
+        ...initialRtcConfiguration,
+        iceServers: iceServers,
+      });
+    };
+    const ret = window.calls.getIceServers();
+    if (typeof ret === "string") {
+      setIceServers(JSON.parse(ret));
+      this.setIceServersPromise = Promise.resolve();
+    } else {
+      this.setIceServersPromise = ret.then((r) => {
+        setIceServers(JSON.parse(r));
+      });
+    }
+
+    this.state = CallsManager.initialState;
 
     this.iceTricklingBuffer = [];
     this.iceTricklingDataChannel = this.peerConnection.createDataChannel(
@@ -70,25 +96,16 @@ export class CallsManager {
       }
       this.iceTricklingBuffer = [];
     };
-  }
 
-  async init(
-    outStream: MediaStream,
-    onIncomingStream: (stream: MediaStream) => void,
-    onStateChanged: (state: CallState) => void,
-  ) {
-    this.onStateChanged = onStateChanged;
     this.peerConnection.ontrack = (e: RTCTrackEvent) => {
       const stream = e.streams[0];
       onIncomingStream(stream);
       this.state = "in-call";
       this.onStateChanged(this.state);
     };
-    outStream
-      .getTracks()
-      .forEach((track) => this.peerConnection.addTrack(track, outStream));
 
     const onIncomingCall = async (payload: string) => {
+      await this.setIceServersPromise;
       const gatheredEnoughIceP = gatheredEnoughIce(this.peerConnection);
 
       const offerObject = {
@@ -97,6 +114,11 @@ export class CallsManager {
       } as RTCSessionDescriptionInit;
       const offerDescription = new RTCSessionDescription(offerObject);
       this.peerConnection.setRemoteDescription(offerDescription);
+      const outStream = await outStreamPromise;
+      console.log("getUserMedia() completed");
+      outStream
+        .getTracks()
+        .forEach((track) => this.peerConnection.addTrack(track, outStream));
       this.peerConnection.setLocalDescription(
         await this.peerConnection.createAnswer(),
       );
@@ -105,6 +127,7 @@ export class CallsManager {
       const answer = this.peerConnection.localDescription!.sdp;
       this.peerConnection.onicecandidate =
         this.trickleIceOverDataChannel.bind(this);
+      logSDP("Answering incoming call with answer:", answer);
       window.calls.acceptCall(answer);
     };
     const onAcceptedCall = (payload: string) => {
@@ -119,16 +142,20 @@ export class CallsManager {
 
     const onHashChange = async () => {
       const hash = decodeURIComponent(window.location.hash.substring(1));
+      if (!hash || hash.length === 0) {
+        console.log("empty URL hash: ", window.location.href);
+        return;
+      }
       if (hash === "startCall") {
         console.log("URL hash CMD: ", hash);
         await this.startCall();
       } else if (hash.startsWith("acceptCall=")) {
         const offer = window.atob(hash.substring(11));
-        console.log("URL hash CMD: acceptCall:", offer);
+        logSDP("Incoming call with offer:", offer);
         await onIncomingCall(offer);
       } else if (hash.startsWith("onAnswer=")) {
         const answer = window.atob(hash.substring(9));
-        console.log("URL hash CMD: onAnswer:", answer);
+        logSDP("Outgoing call was accepted with answer:", answer);
         onAcceptedCall(answer);
       } else {
         console.log("unexpected URL hash: ", hash);
@@ -139,7 +166,13 @@ export class CallsManager {
   }
 
   async startCall(): Promise<void> {
+    await this.setIceServersPromise;
     const gatheredEnoughIceP = gatheredEnoughIce(this.peerConnection);
+    const outStream = await this.outStreamPromise;
+    console.log("getUserMedia() completed");
+    outStream
+      .getTracks()
+      .forEach((track) => this.peerConnection.addTrack(track, outStream));
     this.peerConnection.setLocalDescription(
       await this.peerConnection.createOffer(),
     );
@@ -147,6 +180,7 @@ export class CallsManager {
     const offer = this.peerConnection.localDescription!.sdp;
     this.peerConnection.onicecandidate =
       this.trickleIceOverDataChannel.bind(this);
+    logSDP("Start outgoing call with offer:", offer);
     window.calls.startCall(offer);
     this.state = "ringing";
     this.onStateChanged(this.state);

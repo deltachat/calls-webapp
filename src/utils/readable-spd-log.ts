@@ -103,8 +103,7 @@ function parseSDP(sdpContent: string): SDPSummary | null {
   }
   const lines = sdpContent
     .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => line);
+    .map((line) => line.trim());
 
   const summary: SDPSummary = {
     session: {},

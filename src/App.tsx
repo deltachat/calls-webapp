@@ -212,6 +212,7 @@ export default function App() {
             aria-label="Answer call"
             title="Answer call"
             onClick={acceptCall}
+            className="acceptCallButton"
             style={{
               backgroundColor: "#00b000",
               ...buttonsStyle,

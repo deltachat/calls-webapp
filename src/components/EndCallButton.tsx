@@ -3,7 +3,7 @@ import MaterialSymbolsCallEnd from "~icons/material-symbols/call-end";
 import Button from "~/components/Button";
 
 const containerStyle = {
-  background: "#cb2233",
+  background: "#f01d2c",
 };
 
 interface Props {

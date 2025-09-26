@@ -19,6 +19,7 @@ export default function VideoThumbnail({ videoRef }: Props) {
   return (
     <div style={containerStyle}>
       <video
+        poster="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="
         style={{
           borderRadius: "5px",
           objectFit: "cover",

@@ -127,6 +127,39 @@ export default function App() {
     manager.endCall();
   }, [manager]);
 
+  // MediaSession API stuff, from this sample:
+  // https://googlechrome.github.io/samples/media-session/video-conferencing.html.
+  // Not critical, but can be nice if the platform (browser and the OS)
+  // support it.
+  useEffect(() => {
+    (navigator.mediaSession as any).setCameraActive(isOutVideoEnabled);
+  }, [isOutVideoEnabled]);
+  useEffect(() => {
+    (navigator.mediaSession as any).setMicrophoneActive(isOutAudioEnabled);
+  }, [isOutAudioEnabled]);
+  useEffect(() => {
+    try {
+      navigator.mediaSession.setActionHandler("togglemicrophone" as any, () => {
+        setIsOutAudioEnabled((v) => !v);
+      });
+      navigator.mediaSession.setActionHandler("togglecamera" as any, () => {
+        setIsOutVideoEnabled((v) => !v);
+      });
+      navigator.mediaSession.setActionHandler(
+        "enterpictureinpicture" as any,
+        () => {
+          incVidRef.current?.requestPictureInPicture();
+        },
+      );
+      navigator.mediaSession.setActionHandler("hangup" as any, () => {
+        endCall();
+        document.exitPictureInPicture();
+      });
+    } catch (error) {
+      console.warn("MediaSession features are not supported", error);
+    }
+  }, [endCall, incVidRef]);
+
   let status: string;
   switch (state) {
     case "promptingUserToAcceptCall":

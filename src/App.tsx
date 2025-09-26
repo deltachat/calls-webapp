@@ -89,7 +89,23 @@ export default function App() {
 
   const manager = useMemo(() => {
     const onIncStream = (incStream: MediaStream) => {
-      incVidRef.current!.srcObject = incStream;
+      const vid = incVidRef.current!;
+      vid.srcObject = incStream;
+
+      // On Delta Touch (Ubuntu Touch, Chromium 87)
+      // the caller's audio doesn't seem to auto-play
+      // on the callee's side for some reason. This fixes it.
+      const playIfPaused = () => {
+        if (vid.paused) {
+          console.log("incoming video not playing, will .play() it");
+          vid.play();
+        } else {
+          console.log("incoming video is playing");
+          clearInterval(intervalId);
+        }
+      };
+      const intervalId = setInterval(playIfPaused, 100);
+      playIfPaused();
     };
     return new CallsManager(outStreamPromise, onIncStream, setState);
   }, [outStreamPromise]);

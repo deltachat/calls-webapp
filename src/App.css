@@ -7,3 +7,61 @@ body {
   height: 100%;
   font-family: system-ui;
 }
+
+@keyframes pulse-green {
+  0% {
+    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7);
+    transform: scale(1);
+  }
+  70% {
+    box-shadow: 0 0 0 20px rgba(76, 175, 80, 0);
+    transform: scale(1.08);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
+    transform: scale(1);
+  }
+}
+@keyframes ringing {
+  0% {
+    transform: rotate(0deg);
+  }
+  10% {
+    transform: rotate(-16deg);
+  }
+  20% {
+    transform: rotate(12deg);
+  }
+  30% {
+    transform: rotate(-8deg);
+  }
+  40% {
+    transform: rotate(6deg);
+  }
+  50% {
+    transform: rotate(-4deg);
+  }
+  60% {
+    transform: rotate(3deg);
+  }
+  70% {
+    transform: rotate(-2deg);
+  }
+  80% {
+    transform: rotate(1deg);
+  }
+  90% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+.acceptCallButton {
+  animation: infinite 1.6s pulse-green;
+}
+.acceptCallButton > * {
+  /* Apply this one to the another element,
+  so that the `transform`s from the two animations don't override each other. */
+  animation: infinite linear 0.8s ringing;
+}

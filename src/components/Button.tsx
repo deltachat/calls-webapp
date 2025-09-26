@@ -5,9 +5,9 @@ type Props = {
   children: React.ReactNode;
 } & React.ButtonHTMLAttributes<HTMLButtonElement>;
 
-export default function Button({ children, ...props }: Props) {
+export default function Button({ children, className, ...props }: Props) {
   return (
-    <button className={style.btn} {...props}>
+    <button className={(className ?? "") + " " + style.btn} {...props}>
       {children}
     </button>
   );

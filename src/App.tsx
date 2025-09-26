@@ -21,6 +21,14 @@ export default function App() {
   const outVidRef = useRef<HTMLVideoElement | null>(null);
   const incVidRef = useRef<HTMLVideoElement | null>(null);
 
+  const disableVideoCompletelyRef = useRef<boolean | null>(null);
+  if (disableVideoCompletelyRef.current == null) {
+    disableVideoCompletelyRef.current = location.search.includes(
+      "disableVideoCompletely",
+    );
+  }
+  const disableVideoCompletely = disableVideoCompletelyRef.current;
+
   const enableVideoInitiallyRef = useRef<boolean | null>(null);
   if (enableVideoInitiallyRef.current == null) {
     enableVideoInitiallyRef.current = !location.search.includes(
@@ -30,8 +38,9 @@ export default function App() {
   const enableVideoInitially = enableVideoInitiallyRef.current;
 
   const [isOutAudioEnabled, setIsOutAudioEnabled] = useState(true);
-  const [isOutVideoEnabled, setIsOutVideoEnabled] =
+  const [isOutVideoEnabled_, setIsOutVideoEnabled] =
     useState(enableVideoInitially);
+  const isOutVideoEnabled = disableVideoCompletely ? false : isOutVideoEnabled_;
   const isOutAudioEnabledRef = useRef(isOutAudioEnabled);
   isOutAudioEnabledRef.current = isOutAudioEnabled;
   const isOutVideoEnabledRef = useRef(isOutVideoEnabled);
@@ -41,7 +50,7 @@ export default function App() {
     let stream: MediaStream;
     try {
       stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
+        video: !disableVideoCompletely,
         audio: true,
       });
     } catch (error) {
@@ -62,7 +71,7 @@ export default function App() {
       .forEach((t) => (t.enabled = isOutVideoEnabledRef.current));
 
     return stream;
-  }, []);
+  }, [disableVideoCompletely]);
   const [outStream, setOutStream] = useState<MediaStream | null>(null);
   useEffect(() => {
     let outdated = false;
@@ -89,6 +98,16 @@ export default function App() {
 
   const manager = useMemo(() => {
     const onIncStream = (incStream: MediaStream) => {
+      if (disableVideoCompletely) {
+        incStream.getVideoTracks().forEach((t) => incStream.removeTrack(t));
+        incStream.addEventListener("addtrack", (e) => {
+          if (e.track.kind !== "video") {
+            return;
+          }
+          incStream.removeTrack(e.track);
+        });
+      }
+
       const vid = incVidRef.current!;
       vid.srcObject = incStream;
 
@@ -108,7 +127,7 @@ export default function App() {
       playIfPaused();
     };
     return new CallsManager(outStreamPromise, onIncStream, setState);
-  }, [outStreamPromise]);
+  }, [outStreamPromise, disableVideoCompletely]);
 
   useEffect(() => {
     if (outStream == undefined) {
@@ -134,7 +153,8 @@ export default function App() {
   }, [outStream, isOutAudioEnabled, isOutVideoEnabled]);
 
   const outStreamHasVideoTrack =
-    outStream == undefined || outStream.getVideoTracks().length >= 1;
+    !disableVideoCompletely &&
+    (outStream == undefined || outStream.getVideoTracks().length >= 1);
 
   const acceptCall: null | (() => void) =
     state === "promptingUserToAcceptCall" ? () => manager.acceptCall() : null;

@@ -26,6 +26,10 @@ In order to start the app in audio-only mode initially,
 provide `noOutgoingVideoInitially` in the query (search) string
 of the initial URL, e.g. `/index.html?noOutgoingVideoInitially#startCall`.
 
+In order to completely disable incoming and outgoing video,
+provide `disableVideoCompletely` in the query string of the URL.
+See <https://github.com/deltachat/calls-webapp/issues/31>.
+
 ## Contributing
 
 ### Installing Dependencies

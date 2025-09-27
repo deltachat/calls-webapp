@@ -109,7 +109,9 @@ export default function App() {
       }
 
       const vid = incVidRef.current!;
-      vid.srcObject = incStream;
+      if (vid.srcObject !== incStream) {
+        vid.srcObject = incStream;
+      }
 
       // On Delta Touch (Ubuntu Touch, Chromium 87)
       // the caller's audio doesn't seem to auto-play

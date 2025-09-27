@@ -287,7 +287,7 @@ function formatSummary(context: string, summary: SDPSummary): string {
   });
 
   if (candidates.relay.length === 0) {
-    output.push(` ❌ TURN Relay: No relay candidates found`);
+    output.push(` ❌ No TURN relay candidates found`);
     output.push(` This may cause connection issues in restrictive networks`);
   }
   output.push("");
@@ -310,8 +310,13 @@ function formatSummary(context: string, summary: SDPSummary): string {
       details: [],
     },
     {
+      condition: connectionTypes.relay,
+      status: " ✅ Good: TURN relay available",
+      details: [],
+    },
+    {
       condition: connectionTypes.publicIP && connectionTypes.localIP,
-      status: " ⚠️ Good: Direct connections possible, but no TURN relay",
+      status: " ⚠️ Ok: Direct connections possible, but no TURN relay",
       details: [" May fail in restrictive corporate/university networks"],
     },
     {

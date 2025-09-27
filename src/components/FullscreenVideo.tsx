@@ -11,7 +11,14 @@ interface Props {
 export default function FullscreenVideo({ videoRef }: Props) {
   return (
     <div style={containerStyle}>
-      <video width="100%" height="100%" autoPlay playsInline ref={videoRef} />
+      <video
+        poster="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="
+        width="100%"
+        height="100%"
+        autoPlay
+        playsInline
+        ref={videoRef}
+      />
     </div>
   );
 }

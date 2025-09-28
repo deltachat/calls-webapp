@@ -103,11 +103,45 @@ export class CallsManager {
       this.iceTricklingBuffer = [];
     };
 
+    this.peerConnection.onnegotiationneeded = console.warn
+
+
+    let resolveGotTracks: () => void
+    const gotTracks = new Promise<void>(r => resolveGotTracks = r)
+
+    let incomingMediaStream = new MediaStream()
     this.peerConnection.ontrack = (e: RTCTrackEvent) => {
-      const stream = e.streams[0];
-      onIncomingStream(stream);
+      incomingMediaStream.addTrack(e.track)
+      onIncomingStream(incomingMediaStream);
       this.state = "in-call";
       this.onStateChanged(this.state);
+
+      // resolveGotTracks()
+
+      console.log('ontrack', e)
+
+      // Bro WTF, this is not in the example.
+      e.transceiver.direction = 'sendrecv'
+
+      outStreamPromise.then(async (outStream) => {
+        // if (e.track.kind === 'audio') {
+        //   e.transceiver.sender.replaceTrack(outStream.getAudioTracks()[0])
+        // }else if (e.track.kind === 'video') {
+        //   e.transceiver.sender.replaceTrack(outStream.getVideoTracks()[0])
+        // }
+        console.log('ontrack, outStream, replaceTrack', e)
+
+        // This is not in the example, do we need this?
+        // Apparently this doesn't fix the issue.
+        e.transceiver.sender.setStreams(outStream)
+
+        await e.transceiver.sender.replaceTrack(
+          e.track.kind === "audio"
+            ? outStream.getAudioTracks()[0]
+            : outStream.getVideoTracks()[0],
+        );
+        resolveGotTracks()
+      });
     };
 
     const acceptCall = async (payload: string) => {
@@ -123,14 +157,16 @@ export class CallsManager {
       } as RTCSessionDescriptionInit;
       const offerDescription = new RTCSessionDescription(offerObject);
       this.peerConnection.setRemoteDescription(offerDescription);
-      const outStream = await outStreamPromise;
-      console.log("getUserMedia() completed");
-      outStream
-        .getTracks()
-        .forEach((track) => this.peerConnection.addTrack(track, outStream));
-      this.peerConnection.setLocalDescription(
-        await this.peerConnection.createAnswer(),
-      );
+
+      // const outStream = await outStreamPromise;
+      // console.log("getUserMedia() completed");
+      // outStream
+      //   .getTracks()
+      //   .forEach((track) => this.peerConnection.addTrack(track, outStream));
+
+      await gotTracks
+
+      await this.peerConnection.setLocalDescription();
 
       await gatheredEnoughIceP;
       const answer = this.peerConnection.localDescription!.sdp;
@@ -212,22 +248,38 @@ export class CallsManager {
   }
 
   async startCall(): Promise<void> {
+    const audioTransciever = this.peerConnection.addTransceiver("audio");
+    const videoTransciever = this.peerConnection.addTransceiver("video");
+
     await this.setIceServersPromise;
     const gatheredEnoughIceP = gatheredEnoughIce(this.peerConnection);
-    const outStream = await this.outStreamPromise;
-    console.log("getUserMedia() completed");
-    outStream
-      .getTracks()
-      .forEach((track) => this.peerConnection.addTrack(track, outStream));
-    this.peerConnection.setLocalDescription(
-      await this.peerConnection.createOffer(),
-    );
+
+    this.outStreamPromise.then((stream) => {
+      console.log("getUserMedia() completed");
+      audioTransciever.sender.replaceTrack(stream.getAudioTracks()[0]);
+      videoTransciever.sender.replaceTrack(stream.getVideoTracks()[0]);
+    });
+
+    // // WTF this is not in the example.
+    // const incomingMediaStream = new MediaStream()
+    // incomingMediaStream.addTrack(audioTransciever.receiver.track)
+    // incomingMediaStream.addTrack(videoTransciever.receiver.track)
+    // this.onIncomingStream(incomingMediaStream);
+
+    // const outStream = await this.outStreamPromise;
+    // console.log("getUserMedia() completed");
+    // outStream
+    //   .getTracks()
+    //   .forEach((track) => this.peerConnection.addTrack(track, outStream));
+
+    await this.peerConnection.setLocalDescription();
     await gatheredEnoughIceP;
     const offer = this.peerConnection.localDescription!.sdp;
     this.peerConnection.onicecandidate =
       this.trickleIceOverDataChannel.bind(this);
     logSDP("Start outgoing call with offer:", offer);
     window.calls.startCall(offer);
+    console.log("ringing state", this)
     this.state = "ringing";
     this.onStateChanged(this.state);
   }

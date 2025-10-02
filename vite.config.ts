@@ -1,7 +1,9 @@
+// @ts-ignore
 import { eruda, mockWebxdc } from "@webxdc/vite-plugins";
 import preact from "@preact/preset-vite";
 import Icons from "unplugin-icons/vite";
 import { viteSingleFile } from "vite-plugin-singlefile";
+import injectVersion from "./vite-plugins/inject-version";
 
 import { defineConfig } from "vite";
 import path from "path";
@@ -9,6 +11,7 @@ import path from "path";
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
+    injectVersion(),
     preact(),
     viteSingleFile(),
     Icons({ compiler: "jsx", jsx: "react" }),

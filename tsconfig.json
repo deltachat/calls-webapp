@@ -29,5 +29,5 @@
     "strictNullChecks": true,
     "noImplicitAny": true
   },
-  "include": ["src"]
+  "include": ["src", "vite-plugins", "vite.config.ts"]
 }

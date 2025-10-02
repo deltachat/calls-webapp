@@ -25,15 +25,11 @@ export default function injectVersion(): Plugin {
         if (fileName === "index.html" || fileName.endsWith("/index.html")) {
           const chunk: any = bundle[fileName];
           if (chunk.type === "asset" && typeof chunk.source === "string") {
-            const comment = `<!-- version: ${version} -->`;
             if (chunk.source.includes("<head>")) {
               const script = `<script>console.log("version: ${version}");</script>`;
-              chunk.source = chunk.source.replace(
-                "<head>",
-                `${comment}<head>${script}`,
-              );
+              chunk.source = chunk.source.replace("<head>", `<head>${script}`);
             } else {
-              chunk.source = comment + chunk.source;
+              chunk.source = `<!-- version: ${version} -->` + chunk.source;
             }
           }
         }

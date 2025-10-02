@@ -32,6 +32,7 @@ export default function injectVersion(): Plugin {
               chunk.source = `<!-- version: ${version} -->` + chunk.source;
             }
           }
+          break;
         }
       }
     },

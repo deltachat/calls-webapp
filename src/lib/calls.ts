@@ -110,6 +110,44 @@ export class CallsManager {
       this.onStateChanged(this.state);
     };
 
+    // Print the selected candidate pair(s), for debugging.
+    const connectionstatechangeListener = () => {
+      if (this.peerConnection.connectionState === "connected") {
+        this.peerConnection.removeEventListener(
+          "connectionstatechange",
+          connectionstatechangeListener,
+        );
+
+        // `setTimeout` for things to settle.
+        setTimeout(() => {
+          this.peerConnection
+            .getSenders()
+            .map((s) => s.transport?.iceTransport.getSelectedCandidatePair())
+            .filter((p) => p != undefined)
+            .forEach((pair) => {
+              const prettyType = (type: null | RTCIceCandidateType) => {
+                if (type === "relay") {
+                  return `${type} (TURN)`;
+                }
+                if (type === "srflx") {
+                  return `${type} (STUN)`;
+                }
+                return type;
+              };
+              console.log(
+                `Selected candidate pair: local: ${prettyType(pair.local.type)} ${pair.local.address}` +
+                  ` => remote: ${prettyType(pair.remote.type)} ${pair.remote.address}`,
+                pair,
+              );
+            });
+        }, 500);
+      }
+    };
+    this.peerConnection.addEventListener(
+      "connectionstatechange",
+      connectionstatechangeListener,
+    );
+
     const acceptCall = async (payload: string) => {
       this.state = "connecting";
       this.onStateChanged(this.state);

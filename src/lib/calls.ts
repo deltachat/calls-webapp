@@ -119,6 +119,8 @@ export class CallsManager {
         );
 
         // `setTimeout` for things to settle.
+        // For example, if more ICE is trickled and the pair gets switched
+        // or something else IDK.
         setTimeout(() => {
           this.peerConnection
             .getSenders()

@@ -327,6 +327,30 @@ function gatheredEnoughIce(pc: RTCPeerConnection): Promise<void> {
     pc.addEventListener("icecandidate", listener);
   });
 
+  const gotSrlfxCandidate = new Promise<void>((r) => {
+    const listener = (e: RTCPeerConnectionIceEvent) => {
+      if (e.candidate != null && e.candidate.type === "srflx") {
+        // `setTimeout` to wait just a bit,
+        // just in case we receive more ICE candidates in burst.
+        // Unlike with TURN, we wait for longer here,
+        // because we might get more than 1 srlfx candidate.
+        setTimeout(r, 150);
+
+        pc.removeEventListener("icecandidate", listener);
+      }
+    };
+    pc.addEventListener("icecandidate", listener);
+  });
+
+  const iceServers = pc.getConfiguration().iceServers;
+  const haveTurnServer =
+    iceServers != undefined &&
+    iceServers.some((s) =>
+      typeof s.urls === "string"
+        ? s.urls.startsWith("turn:")
+        : s.urls.some((u) => u.startsWith("turn:")),
+    );
+
   const iceGatheringComplete = new Promise<void>((r) => {
     const listener = () => {
       if (pc.iceGatheringState === "complete") {
@@ -347,6 +371,20 @@ function gatheredEnoughIce(pc: RTCPeerConnection): Promise<void> {
     // in establishing the connection?
     // See https://stackoverflow.com/questions/79750433/is-ice-trickling-signaling-over-turn-data-channel-a-good-idea
     gotTurnCandidate,
+
+    // If we don't have a TURN server, then we let's be satisfied
+    // with just a srflx (STUN) candidate or two.
+    // Apparently if another peer has a TURN candidate,
+    // then the connection can be established
+    // (but I don't know if this is the case for all NAT types).
+    //
+    // Either way, this is not a nice situation to be in already,
+    // so let's "fail fast", or succeed fast,
+    // instead of waiting for ICE gathering to complete.
+    // Because if having one srflx candidate is not enough
+    // to establish connection, then it is still unlikely to succeed
+    // when ICE gathering completes.
+    ...(!haveTurnServer ? [gotSrlfxCandidate] : []),
 
     iceGatheringComplete,
   ]);

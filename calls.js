@@ -25,9 +25,9 @@ window.calls = {
     const defaultIceServers = [
       // { urls: "stun:stun.l.google.com:19302" },
       {
-        urls: "turn:ci-chatmail.testrun.org",
-        username: "ohV8aec1",
-        credential: "zo3theiY",
+        urls: "turn:turn.jami.net",
+        username: "ring",
+        credential: "ring",
       },
     ];
     return JSON.stringify(defaultIceServers);

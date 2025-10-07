@@ -245,20 +245,7 @@ export default function App() {
           textAlign: "center",
         }}
       >
-        {acceptCall != null && (
-          <Button
-            aria-label="Answer call"
-            title="Answer call"
-            onClick={acceptCall}
-            className="acceptCallButton"
-            style={{
-              backgroundColor: "#00b000",
-              ...buttonsStyle,
-            }}
-          >
-            <MaterialSymbolsCall />
-          </Button>
-        )}
+        <EndCallButton onClick={endCall} style={buttonsStyle} />
         <Button
           aria-label={toggleAudioLabel}
           title={toggleAudioLabel}
@@ -285,7 +272,20 @@ export default function App() {
             )}
           </Button>
         )}
-        <EndCallButton onClick={endCall} style={buttonsStyle} />
+        {acceptCall != null && (
+          <Button
+            aria-label="Answer call"
+            title="Answer call"
+            onClick={acceptCall}
+            className="acceptCallButton"
+            style={{
+              backgroundColor: "#00b000",
+              ...buttonsStyle,
+            }}
+          >
+            <MaterialSymbolsCall />
+          </Button>
+        )}
       </div>
     </div>
   );

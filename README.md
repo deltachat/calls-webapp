@@ -20,7 +20,8 @@ Commands are given to the app via URL hash:
 - `#acceptCall=PAYLOAD`: same as `#offerIncomingCall`, but doesn't show the "Incoming call. Answer?" screen and instead automatically and immediately accepts the call.
 - `#onAnswer=PAYLOAD`: notifies the app that the outgoing call was accepted and provides the answer payload
 
-**IMPORTANT:** `PAYLOAD` **must** be base64 encoded (NOTE: you might still need to URL-encode the base64 string to be a valid URL hash) before passing it to the app in the URL hash.
+**IMPORTANT:** `PAYLOAD` **must** be base64 encoded and then url-encoded, including url-encoding the character `=`
+(the latter is not always default, but needed as `=` is used as a delimiter in the URL as well as padding in base64)
 
 In order to start the app in audio-only mode initially,
 provide `noOutgoingVideoInitially` in the query (search) string

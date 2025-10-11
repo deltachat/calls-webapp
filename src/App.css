@@ -7,6 +7,11 @@ body {
   height: 100%;
   font-family: system-ui;
 }
+:root {
+  --ring-animation-period: 0.8;
+  /* Default value, can be overridden in JS. */
+  --ringtone-bpm: calc(60 / var(--ring-animation-period));
+}
 
 @keyframes pulse-green {
   0% {
@@ -58,10 +63,13 @@ body {
   }
 }
 .acceptCallButton {
-  animation: infinite 1.6s pulse-green;
+  --base-animation-period: calc(60s / var(--ringtone-bpm));
+  animation: infinite calc(2 * var(--base-animation-period)) pulse-green;
 }
 .acceptCallButton > * {
   /* Apply this one to the another element,
   so that the `transform`s from the two animations don't override each other. */
-  animation: infinite linear 0.8s ringing;
+  /* Let's not make this depend on `--ringtone-bpm` because it looks ugly
+  when it's too fast or too slow. */
+  animation: infinite linear calc(var(--ring-animation-period) * 1s) ringing;
 }

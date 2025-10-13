@@ -12,13 +12,14 @@ const containerStyle = {
 };
 
 interface Props {
+  tag: "video" | "audio";
   videoRef: React.RefObject<HTMLVideoElement | null>;
 }
 
-export default function VideoThumbnail({ videoRef }: Props) {
+export default function VideoThumbnail({ tag: Tag, videoRef }: Props) {
   return (
     <div style={containerStyle}>
-      <video
+      <Tag
         poster="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="
         style={{
           borderRadius: "5px",

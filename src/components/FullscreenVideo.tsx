@@ -5,13 +5,14 @@ const containerStyle = {
 };
 
 interface Props {
+  tag: "video" | "audio";
   videoRef: React.RefObject<HTMLVideoElement | null>;
 }
 
-export default function FullscreenVideo({ videoRef }: Props) {
+export default function FullscreenVideo({ tag: Tag, videoRef }: Props) {
   return (
     <div style={containerStyle}>
-      <video
+      <Tag
         poster="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="
         width="100%"
         height="100%"

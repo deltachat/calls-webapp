@@ -202,8 +202,14 @@ export default function App() {
   return (
     <div style={{ height: "100vh", overflow: "hidden" }}>
       <div style={containerStyle}>
-        <FullscreenVideo videoRef={incVidRef} />
-        <VideoThumbnail videoRef={outVidRef} />
+        <FullscreenVideo
+          tag={disableVideoCompletely ? "audio" : "video"}
+          videoRef={incVidRef}
+        />
+        <VideoThumbnail
+          tag={disableVideoCompletely ? "audio" : "video"}
+          videoRef={outVidRef}
+        />
       </div>
 
       <div

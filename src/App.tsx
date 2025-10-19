@@ -20,6 +20,8 @@ export default function App() {
   const [state, setState] = useState<CallState>(CallsManager.initialState);
   const outVidRef = useRef<HTMLVideoElement | null>(null);
   const incVidRef = useRef<HTMLVideoElement | null>(null);
+  const incAudRef = useRef<HTMLAudioElement | null>(null);
+  const outAudRef = useRef<HTMLAudioElement | null>(null);
 
   const disableVideoCompletelyRef = useRef<boolean | null>(null);
   if (disableVideoCompletelyRef.current == null) {
@@ -94,6 +96,12 @@ export default function App() {
     outVidRef.current.srcObject !== outStream
   ) {
     outVidRef.current.srcObject = outStream;
+  } else if (
+    outStream &&
+    outAudRef.current &&
+    outAudRef.current.srcObject !== outStream
+  ) {
+    outAudRef.current.srcObject = outStream;
   }
 
   const manager = useMemo(() => {
@@ -106,27 +114,32 @@ export default function App() {
           }
           incStream.removeTrack(e.track);
         });
-      }
 
-      const vid = incVidRef.current!;
-      if (vid.srcObject !== incStream) {
-        vid.srcObject = incStream;
-      }
-
-      // On Delta Touch (Ubuntu Touch, Chromium 87)
-      // the caller's audio doesn't seem to auto-play
-      // on the callee's side for some reason. This fixes it.
-      const playIfPaused = () => {
-        if (vid.paused) {
-          console.log("incoming video not playing, will .play() it");
-          vid.play();
-        } else {
-          console.log("incoming video is playing");
-          clearInterval(intervalId);
+        const aud = incAudRef.current!;
+        if (aud.srcObject !== incStream) {
+          aud.srcObject = incStream;
         }
-      };
-      const intervalId = setInterval(playIfPaused, 100);
-      playIfPaused();
+      } else {
+        const vid = incVidRef.current!;
+        if (vid.srcObject !== incStream) {
+          vid.srcObject = incStream;
+        }
+
+        // On Delta Touch (Ubuntu Touch, Chromium 87)
+        // the caller's audio doesn't seem to auto-play
+        // on the callee's side for some reason. This fixes it.
+        const playIfPaused = () => {
+          if (vid.paused) {
+            console.log("incoming video not playing, will .play() it");
+            vid.play();
+          } else {
+            console.log("incoming video is playing");
+            clearInterval(intervalId);
+          }
+        };
+        const intervalId = setInterval(playIfPaused, 100);
+        playIfPaused();
+      }
     };
     return new CallsManager(outStreamPromise, onIncStream, setState);
   }, [outStreamPromise, disableVideoCompletely]);
@@ -202,8 +215,17 @@ export default function App() {
   return (
     <div style={{ height: "100vh", overflow: "hidden" }}>
       <div style={containerStyle}>
-        <FullscreenVideo videoRef={incVidRef} />
-        <VideoThumbnail videoRef={outVidRef} />
+        {disableVideoCompletely ? (
+          <>
+            <audio autoPlay playsInline ref={incAudRef} />
+            <audio autoPlay playsInline ref={outAudRef} />
+          </>
+        ) : (
+          <>
+            <FullscreenVideo videoRef={incVidRef} />
+            <VideoThumbnail videoRef={outVidRef} />
+          </>
+        )}
       </div>
 
       <div

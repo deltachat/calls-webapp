@@ -88,13 +88,13 @@ export default function App() {
     };
   }, [outStreamPromise]);
 
-  if (
-    outStream &&
-    outVidRef.current &&
-    outVidRef.current.srcObject !== outStream
-  ) {
-    outVidRef.current.srcObject = outStream;
-  }
+  // if (
+  //   outStream &&
+  //   outVidRef.current &&
+  //   outVidRef.current.srcObject !== outStream
+  // ) {
+  //   outVidRef.current.srcObject = outStream;
+  // }
 
   const manager = useMemo(() => {
     const onIncStream = (incStream: MediaStream) => {

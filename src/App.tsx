@@ -132,6 +132,11 @@ export default function App() {
   }, [outStreamPromise, disableVideoCompletely]);
 
   useEffect(() => {
+    // For debugging.
+    (window as any).__callsManager = manager;
+  }, [manager]);
+
+  useEffect(() => {
     if (outStream == undefined) {
       return;
     }

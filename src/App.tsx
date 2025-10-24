@@ -46,6 +46,8 @@ export default function App() {
   const isOutVideoEnabledRef = useRef(isOutVideoEnabled);
   isOutVideoEnabledRef.current = isOutVideoEnabled;
 
+  const [isRelayUsed, setIsRelayUsed] = useState<null | boolean>(null);
+
   const outStreamPromise = useMemo(async () => {
     let stream: MediaStream;
     try {
@@ -128,7 +130,12 @@ export default function App() {
       const intervalId = setInterval(playIfPaused, 100);
       playIfPaused();
     };
-    return new CallsManager(outStreamPromise, onIncStream, setState);
+    return new CallsManager(
+      outStreamPromise,
+      onIncStream,
+      setState,
+      setIsRelayUsed,
+    );
   }, [outStreamPromise, disableVideoCompletely]);
 
   useEffect(() => {
@@ -242,6 +249,13 @@ export default function App() {
           )}
         </div>
       </div>
+
+      {process.env.NODE_ENV !== "production" && isRelayUsed != null && (
+        <div role="status" className="isRelayUsedText">
+          {isRelayUsed ? "non-P2P" : "P2P"}
+        </div>
+      )}
+
       <div
         style={{
           position: "absolute",

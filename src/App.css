@@ -65,3 +65,11 @@ body {
   so that the `transform`s from the two animations don't override each other. */
   animation: infinite linear 0.8s ringing;
 }
+.isRelayUsedText {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  margin: 0.75rem;
+  opacity: 0.5;
+  font-weight: 600;
+}

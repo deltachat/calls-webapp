@@ -89,9 +89,24 @@ export class CallsManager {
         id: 1,
       },
     );
-    this.iceTricklingDataChannel.onmessage = (e) => {
+    this.iceTricklingDataChannel.onmessage = async (e) => {
       console.log("received ICE candidate from remote peer", e.data);
-      this.peerConnection.addIceCandidate(JSON.parse(e.data));
+      const parsed = JSON.parse(e.data);
+      try {
+        await this.peerConnection.addIceCandidate(parsed);
+      } catch (error) {
+        // Suppress the error happening in older browsers, see
+        // https://codeberg.org/lk108/deltatouch/pulls/91#issuecomment-7731737.
+        const expected: boolean =
+          parsed == null &&
+          error instanceof Error &&
+          error.message.includes(
+            "missing values for both sdpMid and sdpMLineIndex",
+          );
+        if (!expected) {
+          throw error;
+        }
+      }
     };
     this.iceTricklingDataChannel.onopen = () => {
       console.log(

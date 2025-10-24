@@ -59,7 +59,7 @@ export class CallsManager {
     private outStreamPromise: Promise<MediaStream>,
     onIncomingStream: (stream: MediaStream) => void,
     private onStateChanged: (state: CallState) => void,
-    onIsRelayUsedChange: (relayUsed: boolean) => void,
+    onIsRelayUsedChange: (relayUsed: null | boolean) => void,
   ) {
     this.peerConnection = new RTCPeerConnection(initialRtcConfiguration);
 
@@ -124,11 +124,34 @@ export class CallsManager {
         // For example, if more ICE is trickled and the pair gets switched
         // or something else IDK.
         setTimeout(() => {
-          const pairs = this.peerConnection
+          const transports = this.peerConnection
             .getSenders()
-            .map((s) => s.transport?.iceTransport.getSelectedCandidatePair())
-            .filter((p) => p != undefined);
+            .map((s) => s.transport?.iceTransport)
+            .filter((t) => t != undefined);
 
+          const getPairs = () =>
+            transports
+              .map((t) => t.getSelectedCandidatePair())
+              .filter((p) => p != undefined);
+
+          const checkRelayUsed = () => {
+            const pairs = getPairs();
+            if (pairs.length > 0) {
+              const relayUsed = pairs.some(
+                (p) => p.local.type === "relay" || p.remote.type === "relay",
+              );
+              onIsRelayUsedChange(relayUsed);
+            } else {
+              onIsRelayUsedChange(null);
+            }
+          };
+
+          checkRelayUsed();
+          for (const t of transports) {
+            t.addEventListener("selectedcandidatepairchange", checkRelayUsed);
+          }
+
+          const pairs = getPairs();
           pairs.forEach((pair) => {
             const prettyType = (type: null | RTCIceCandidateType) => {
               if (type === "relay") {
@@ -145,13 +168,6 @@ export class CallsManager {
               pair,
             );
           });
-
-          const relayUsed = pairs.some(
-            (p) => p.local.type === "relay" || p.remote.type === "relay",
-          );
-          if (pairs.length > 0) {
-            onIsRelayUsedChange(relayUsed);
-          }
         }, 500);
       }
     };

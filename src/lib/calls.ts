@@ -259,11 +259,26 @@ export class CallsManager {
     outStream
       .getTracks()
       .forEach((track) => this.peerConnection.addTrack(track, outStream));
+
+    const transceivers = this.peerConnection.getTransceivers();
+    transceivers.forEach((transceiver) => {
+    const kind = transceiver.sender.track?.kind;
+      if (kind === "video") {
+        let sendCodecs = RTCRtpSender.getCapabilities(kind)?.codecs || [];
+        let recvCodecs = RTCRtpReceiver.getCapabilities(kind)?.codecs || [];
+        console.log("codecs:", sendCodecs, recvCodecs)
+        const mimeType = "video/H264";
+        sendCodecs = preferCodec(sendCodecs, mimeType);
+        recvCodecs = preferCodec(recvCodecs, mimeType);
+        transceiver.setCodecPreferences([...sendCodecs, ...recvCodecs]);
+      }
+    });
     this.peerConnection.setLocalDescription(
       await this.peerConnection.createOffer(),
     );
     await gatheredEnoughIceP;
     const offer = this.peerConnection.localDescription!.sdp;
+    console.log(offer)
     this.peerConnection.onicecandidate =
       this.trickleIceOverDataChannel.bind(this);
     logSDP("Start outgoing call with offer:", offer);
@@ -398,4 +413,20 @@ function sendIceCandidateToDataChannel(
   dataChannel.send(
     JSON.stringify(candidate === null ? candidate : candidate.toJSON()),
   );
+}
+
+function preferCodec(codecs: Array<RTCRtpCodec>, mimeType: string) {
+  let otherCodecs: Array<RTCRtpCodec> = [];
+  let sortedCodecs: Array<RTCRtpCodec> = [];
+
+  codecs.forEach((codec) => {
+    if (codec.mimeType === mimeType) {
+      sortedCodecs.push(codec);
+    } else {
+      // for now completely disable other codecs instead of just sorting at the top the preferred one
+      //otherCodecs.push(codec);
+    }
+  });
+
+  return sortedCodecs.concat(otherCodecs);
 }

@@ -59,6 +59,7 @@ export class CallsManager {
     private outStreamPromise: Promise<MediaStream>,
     onIncomingStream: (stream: MediaStream) => void,
     private onStateChanged: (state: CallState) => void,
+    onIsRelayUsedChange: (relayUsed: null | boolean) => void,
   ) {
     this.peerConnection = new RTCPeerConnection(initialRtcConfiguration);
 
@@ -110,7 +111,8 @@ export class CallsManager {
       this.onStateChanged(this.state);
     };
 
-    // Print the selected candidate pair(s), for debugging.
+    // Print the selected candidate pair(s), for debugging,
+    // and invoke `onRelayUsageChange`.
     const connectionstatechangeListener = () => {
       if (this.peerConnection.connectionState === "connected") {
         this.peerConnection.removeEventListener(
@@ -122,26 +124,50 @@ export class CallsManager {
         // For example, if more ICE is trickled and the pair gets switched
         // or something else IDK.
         setTimeout(() => {
-          this.peerConnection
+          const transports = this.peerConnection
             .getSenders()
-            .map((s) => s.transport?.iceTransport.getSelectedCandidatePair())
-            .filter((p) => p != undefined)
-            .forEach((pair) => {
-              const prettyType = (type: null | RTCIceCandidateType) => {
-                if (type === "relay") {
-                  return `${type} (TURN)`;
-                }
-                if (type === "srflx") {
-                  return `${type} (STUN)`;
-                }
-                return type;
-              };
-              console.log(
-                `Selected candidate pair: local: ${prettyType(pair.local.type)} ${pair.local.address}` +
-                  ` => remote: ${prettyType(pair.remote.type)} ${pair.remote.address}`,
-                pair,
+            .map((s) => s.transport?.iceTransport)
+            .filter((t) => t != undefined);
+
+          const getPairs = () =>
+            transports
+              .map((t) => t.getSelectedCandidatePair())
+              .filter((p) => p != undefined);
+
+          const checkRelayUsed = () => {
+            const pairs = getPairs();
+            if (pairs.length > 0) {
+              const relayUsed = pairs.some(
+                (p) => p.local.type === "relay" || p.remote.type === "relay",
               );
-            });
+              onIsRelayUsedChange(relayUsed);
+            } else {
+              onIsRelayUsedChange(null);
+            }
+          };
+
+          checkRelayUsed();
+          for (const t of transports) {
+            t.addEventListener("selectedcandidatepairchange", checkRelayUsed);
+          }
+
+          const pairs = getPairs();
+          pairs.forEach((pair) => {
+            const prettyType = (type: null | RTCIceCandidateType) => {
+              if (type === "relay") {
+                return `${type} (TURN)`;
+              }
+              if (type === "srflx") {
+                return `${type} (STUN)`;
+              }
+              return type;
+            };
+            console.log(
+              `Selected candidate pair: local: ${prettyType(pair.local.type)} ${pair.local.address}` +
+                ` => remote: ${prettyType(pair.remote.type)} ${pair.remote.address}`,
+              pair,
+            );
+          });
         }, 500);
       }
     };

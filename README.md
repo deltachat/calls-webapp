@@ -2,6 +2,44 @@
 
 P2P videocalls via WebRTC for integration into Delta Chat clients.
 
+## How it works
+
+Below is a sequence diagram of how Delta Chat works together with this app.
+If you see a block of text instead of a diagram, go
+[here](https://mermaid.ink/svg/pako:eNqtVU1v2kAQ_SujvRQkQgFjIFaUKpBLD4miQIRacVnsAVZde93ddRIa5b93P-ya8CGlaVc-rL3z3sy8ebZfSCwSJBFR-LPALMZrRteSposMzMqp1CxmOc00XHEWI1DlN58UXCPXFCYbqo8Ezx7ub3eD3f1nmM4ebkGhfESpDlHjCjUWy-OYi6W8hEYsCp7AEkFvEBRNd8tqHqEVy5p0t2ofeis0gjDsniIqO80lKoUu44JMteGDCeUcnpjeWK4F8XAffXZ56ZuOYG64TaJ0C3mxNIdAk8RyfTkRf8eRKgSJnG4disY_UJfyeCHPXLiv7psoZEUJzNXX77WrK-r2gn5oHzaUXPFniGmWsISaFtfUyCUxaZ5i_mp6Mw36QrY2TVmKo3PhDXfYrFnt0R7xgZ5zyjSshCyZ32DNU3uiWYqi0PsKGZkjaGBKGW_a8uw0tQDlpkENE-dtuNnuyAEHWrTKNKYhm9oUQeMNWM9oq7Zry7ur7fqc4_J-NgGxWqFsHnrElWQdVfoDFuQqjjH37qhMYQNcA--yxF70ewxRT208m_thCTuFk84IorAf9Lplwnr2rp9jngra1RWFdr3HU_u8_91RjvVv_VTJWwpW-WlaSGwBRzuZDX3EU4baF-KDhqKZetpxFBci97va8hcXtXR3vTt4ZAlat5sMKTTYCnKhFFtybB5B1h8UJwsmb-CuEsNgaTOhjzK5yj3T-J-YxrtMtpkP8GCWkBZZS5aQSMsCWyRFaQZnbsmLDVkQ45EUFyQy2wRXtODavn6vBmY--9-FSCukFMV6Q6IV5crcFbk1S_mfq0JoocV0m8V_ICY_yokoMk2i7tBRkuiFPJMoGAza3WEw6PbDTvc8DLotsiVRf9QeDfvn571g2Bl0wv7wtUV-uRo65iDsmNUb9cLRyIBaBBOmhbzxv173B379DXFtYL8).
+
+```mermaid
+sequenceDiagram
+    participant Alice as Alice's Delta Chat
+    participant ATURN as Alice's TURN / STUN servers
+    participant BTURN as Bob's TURN / STUN servers<br> (could be the same as Alice's)
+    participant Bob as Bob's Delta Chat
+
+    Note over Alice: Alice presses<br>"Start Call with Bob"
+    Alice ->> ATURN: What's my public address?
+    Alice ->> ATURN: Please relay my packets
+    ATURN -->> Alice: Your address is<br>42.42.42.42:12345<br>(srflx candidate gathered)
+    ATURN -->> Alice: I will relay your packets<br>(TURN (relay) candidate<br>gathered)
+    Note over Alice: Wait for relay candidate<br>or for timeout
+    Alice ->> Bob: (email) I want to start a call. My address is 42.42.42.42:12345,<br>or you can reach me at my TURN server.<br>(WebRTC offer)
+
+    Note over Bob: Bob presses "Accept Call"
+    Bob ->> BTURN: What's my public address?
+    Bob ->> BTURN: Please relay my packets
+    ATURN ->> Alice: BTW your other address is<br>42.42.42.43:54321
+    BTURN -->> Bob: Your address is<br>43.43.43.43:55555<br>(srflx candidate gathered)
+    BTURN -->> Bob: I will relay your packets<br>(TURN (relay) candidate<br>gathered)
+    Note over Bob: Wait for relay candidate<br>or for timeout
+    Bob ->> Alice: (email) Sure, let's have a call. My address is 43.43.43.43:55555,<br>or you can reach me at my TURN server.<br>(WebRTC answer)
+
+    loop
+        Alice <<-->> Bob: P2P video stream (if possible)
+        Alice <<->> ATURN: relayed video stream<br>(if P2P not possible)
+        ATURN <<->> BTURN: relayed video stream<br>(if P2P not possible)
+        BTURN <<->> Bob: relayed video stream<br>(if P2P not possible)
+    end
+```
+
 ## Integrating
 
 To integrate into your Delta Chat client you need to provide a

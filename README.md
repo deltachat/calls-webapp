@@ -6,7 +6,7 @@ P2P videocalls via WebRTC for integration into Delta Chat clients.
 
 Below is a sequence diagram of how Delta Chat works together with this app.
 If you see a block of text instead of a diagram, go
-[here](https://mermaid.ink/svg/pako:eNqtVU1v2kAQ_SujvRQkQgFjIFaUKpBLD4miQIRacVnsAVZde93ddRIa5b93P-ya8CGlaVc-rL3z3sy8ebZfSCwSJBFR-LPALMZrRteSposMzMqp1CxmOc00XHEWI1DlN58UXCPXFCYbqo8Ezx7ub3eD3f1nmM4ebkGhfESpDlHjCjUWy-OYi6W8hEYsCp7AEkFvEBRNd8tqHqEVy5p0t2ofeis0gjDsniIqO80lKoUu44JMteGDCeUcnpjeWK4F8XAffXZ56ZuOYG64TaJ0C3mxNIdAk8RyfTkRf8eRKgSJnG4disY_UJfyeCHPXLiv7psoZEUJzNXX77WrK-r2gn5oHzaUXPFniGmWsISaFtfUyCUxaZ5i_mp6Mw36QrY2TVmKo3PhDXfYrFnt0R7xgZ5zyjSshCyZ32DNU3uiWYqi0PsKGZkjaGBKGW_a8uw0tQDlpkENE-dtuNnuyAEHWrTKNKYhm9oUQeMNWM9oq7Zry7ur7fqc4_J-NgGxWqFsHnrElWQdVfoDFuQqjjH37qhMYQNcA--yxF70ewxRT208m_thCTuFk84IorAf9Lplwnr2rp9jngra1RWFdr3HU_u8_91RjvVv_VTJWwpW-WlaSGwBRzuZDX3EU4baF-KDhqKZetpxFBci97va8hcXtXR3vTt4ZAlat5sMKTTYCnKhFFtybB5B1h8UJwsmb-CuEsNgaTOhjzK5yj3T-J-YxrtMtpkP8GCWkBZZS5aQSMsCWyRFaQZnbsmLDVkQ45EUFyQy2wRXtODavn6vBmY--9-FSCukFMV6Q6IV5crcFbk1S_mfq0JoocV0m8V_ICY_yokoMk2i7tBRkuiFPJMoGAza3WEw6PbDTvc8DLotsiVRf9QeDfvn571g2Bl0wv7wtUV-uRo65iDsmNUb9cLRyIBaBBOmhbzxv173B379DXFtYL8).
+[here](https://mermaid.ink/svg/pako:eNqtVstu2zAQ_JUFL7UBx43ltxCkiJ0ecmgQJA6MFr7Q0tomSokqSSV1g_x7l5QUO34UaVpDB0ncndmdHVJ-YpGKkYXM4I8c0wgvBV9qnsxSoF_GtRWRyHhq4UKKCIGb4uaDgUuUlsN4xe2B4Mn97fV2sH_-CHeT-2swqB9Qm_2sUZU1UvPDOWdzfQ61SOUyhjmCXSEYnmyXVT8Aq-Yb0O2qi9BrZREUoRcQYdlpptEY9IwzdmcJD8ZcSngUduWwZqxIL6JPzs-LpkOYEjYRJWvI8jktAo9jh_XpSPyNRG4QNEq-9lk8-o62lKcQ8sSHF9V9VbmuIEH4-jpBs7rCVtDudN3LmtEL-RMinsYi5tTikpNcGuP6MeQr6o0aLApZO5qyFA_nw2t-sb5BdUs7wHt6TrmwsFC6RH6VS2_dihUJqtzuKkQyh1DDhAtZd-W5aVoFxk-DE5KUTfiy3pID9rRolDTUkKOmIni0AucZ69T2bRXuavo-pzi_nYxBLRao6_se8SU5R5X-gBm7iCLMCndUpnABvoE3WWIn-i2G2ExtNJkWw1JuCked0Q67nXbQKgk3s_f9HPJUu1ldYdf93uKpXdz_7iiP-rd-quQtBav8dJdrbIBEN5kVf8BjhtoV4p2G4ql53HKUVCor7jaWPzvbSHcT3MCDiNG5nRgSqIkFZMoYMZdYP5C5OVC8LBi_SveVEIKDTZU9iOQrL5BG_4Q02kZyzbwDB9O4kmr0Yvli8_3R8DvT6m3rDRepCxdWqJRLKAdD1qHJr3iaovQDpQ8L0hFDG9WsqOjag-Cl1WjqWZDVHREdQ5lWiXNmojTC1fjzxokG-MJSbe77JFLiI7ZIEUHkqJ2rtgh2Z_nSKPlwt0U4sqEP2Pxg9r46pdaswZZaxCy0OscGS1DTJqFH9uRCZoyQEpyxkG5jXPBcWnfUPVMafWK_KZVUmVrlyxULF1waesozJ0f5n-LlrSZC1GOVp5aFrdbAg7Dwif1kYdBu9vrdoNNvDYP2IBi0ggZbs_Ck1eq3m8Ne93TQHwxPe0H3ucF-eV7Soke9tPuD_vA0GFDA82_Bo8ZW).
 
 ```mermaid
 sequenceDiagram
@@ -37,6 +37,13 @@ sequenceDiagram
         Alice <<->> ATURN: relayed video stream<br>(if P2P not possible)
         ATURN <<->> BTURN: relayed video stream<br>(if P2P not possible)
         BTURN <<->> Bob: relayed video stream<br>(if P2P not possible)
+    end
+
+    BTURN ->> Bob: BTW your other address is<br>43.43.43.43:55556
+
+    loop An additional WebRTC data channel can be established (via relay or P2P)<br>to promote more ICE candidates after the initial connection is established
+        Alice ->> Bob: My other address is 42.42.42.43:54321
+        Bob ->> Alice: My other address is 43.43.43.43:55556
     end
 ```
 

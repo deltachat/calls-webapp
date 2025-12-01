@@ -193,6 +193,13 @@ export default function App() {
       break;
   }
 
+  useEffect(() => {
+    if (state === "ringing") {
+      const stopSound = startRingingTone();
+      return stopSound;
+    }
+  }, [state]);
+
   const inCall = state === "in-call";
   const containerStyle = {
     display: inCall ? "block" : "none",
@@ -308,4 +315,74 @@ export default function App() {
       </div>
     </div>
   );
+}
+
+/**
+ * @returns "stop" function
+ */
+function startRingingTone(): () => void {
+  const ctx = new AudioContext({ latencyHint: "playback" });
+
+  // Start a little ahead to avoid glitches.
+  const startTime = ctx.currentTime + 0.05;
+
+  // https://en.wikipedia.org/wiki/Call-progress_tone#ETSI_guidelines_(EU)
+  const frequency = 425;
+  const onTime = 1;
+  const offTime = 4;
+  const period = onTime + offTime;
+  // This is not in the guidelines, but this removes glitches.
+  const fadeTime = 1 / frequency;
+
+  const oscillator = ctx.createOscillator();
+  oscillator.type = "sine";
+  oscillator.frequency.value = frequency;
+  oscillator.start(startTime);
+
+  const generalGain = ctx.createGain();
+  generalGain.gain.value = 0.2;
+
+  const periodicGain = ctx.createGain();
+  periodicGain.gain.value = 0;
+  let lastWaveInd = 0;
+  const addPeriodicGainWave = () => {
+    const onStartTime = lastWaveInd * period + startTime;
+    const onEndTime = onStartTime + onTime;
+    // The gain is at 0 currently.
+    periodicGain.gain.setValueAtTime(0, onStartTime);
+    periodicGain.gain.linearRampToValueAtTime(1, onStartTime + fadeTime);
+
+    periodicGain.gain.setValueAtTime(1, onEndTime);
+    periodicGain.gain.linearRampToValueAtTime(0, onEndTime + fadeTime);
+    lastWaveInd++;
+  };
+  // Probably not the nicest way, we could solve this
+  // with another oscillator, but it works.
+  addPeriodicGainWave();
+  addPeriodicGainWave();
+  addPeriodicGainWave();
+  addPeriodicGainWave();
+  const intervalId = setInterval(addPeriodicGainWave, period * 1000);
+
+  oscillator
+    .connect(generalGain)
+    .connect(periodicGain)
+    .connect(ctx.destination);
+
+  return () => {
+    clearInterval(intervalId);
+
+    const now = ctx.currentTime;
+    const fadeoutStart = now + 0.05;
+    const fadeoutEnd = fadeoutStart + fadeTime;
+    generalGain.gain.setValueAtTime(generalGain.gain.value, fadeoutStart);
+    generalGain.gain.linearRampToValueAtTime(0, fadeoutEnd);
+
+    setTimeout(
+      () => {
+        ctx.close();
+      },
+      (fadeoutEnd - now) * 1000,
+    );
+  };
 }

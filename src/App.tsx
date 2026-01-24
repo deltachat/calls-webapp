@@ -19,7 +19,6 @@ import "./App.css";
 export default function App() {
   const [state, setState] = useState<CallState>(CallsManager.initialState);
   const outVidRef = useRef<HTMLVideoElement | null>(null);
-  const incVidRef = useRef<HTMLVideoElement | null>(null);
 
   const disableVideoCompletelyRef = useRef<boolean | null>(null);
   if (disableVideoCompletelyRef.current == null) {
@@ -98,6 +97,7 @@ export default function App() {
     outVidRef.current.srcObject = outStream;
   }
 
+  const [incStream, setIncStream] = useState<MediaStream | null>(null);
   const manager = useMemo(() => {
     const onIncStream = (incStream: MediaStream) => {
       if (disableVideoCompletely) {
@@ -110,25 +110,7 @@ export default function App() {
         });
       }
 
-      const vid = incVidRef.current!;
-      if (vid.srcObject !== incStream) {
-        vid.srcObject = incStream;
-      }
-
-      // On Delta Touch (Ubuntu Touch, Chromium 87)
-      // the caller's audio doesn't seem to auto-play
-      // on the callee's side for some reason. This fixes it.
-      const playIfPaused = () => {
-        if (vid.paused) {
-          console.log("incoming video not playing, will .play() it");
-          vid.play();
-        } else {
-          console.log("incoming video is playing");
-          clearInterval(intervalId);
-        }
-      };
-      const intervalId = setInterval(playIfPaused, 100);
-      playIfPaused();
+      setIncStream(incStream);
     };
     return new CallsManager(
       outStreamPromise,
@@ -221,7 +203,7 @@ export default function App() {
   return (
     <div style={{ height: "100vh", overflow: "hidden" }}>
       <div style={containerStyle}>
-        <FullscreenVideo videoRef={incVidRef} />
+        <FullscreenVideo mediaStream={incStream} />
         <VideoThumbnail videoRef={outVidRef} />
       </div>
 

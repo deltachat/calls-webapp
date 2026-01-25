@@ -8,9 +8,10 @@ const containerStyle = {
 
 interface Props {
   mediaStream: MediaStream | null;
+  hide: boolean;
 }
 
-export default function FullscreenVideo({ mediaStream }: Props) {
+export default function FullscreenVideo({ mediaStream, hide }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   /**
    * This element will play the same source as the video element.
@@ -100,7 +101,7 @@ export default function FullscreenVideo({ mediaStream }: Props) {
   }, [mediaStream, videoRef, audioRef]);
 
   return (
-    <div style={containerStyle}>
+    <div style={{ ...containerStyle, display: hide ? "none" : undefined }}>
       <video
         muted={fallBackToAudioEl}
         poster="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="

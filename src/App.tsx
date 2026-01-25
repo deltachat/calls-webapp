@@ -125,6 +125,58 @@ export default function App() {
     (window as any).__callsManager = manager;
   }, [manager]);
 
+  const [incStreamVideoTracks, setIncStreamVideoTracks] = useState<
+    undefined | MediaStreamTrack[]
+  >(undefined);
+  useEffect(() => {
+    if (incStream == null) {
+      setIncStreamHasVideo(undefined);
+      return;
+    }
+
+    const checkTracks = () => {
+      setIncStreamVideoTracks(incStream.getVideoTracks());
+    };
+    checkTracks();
+
+    incStream.addEventListener("addtrack", checkTracks);
+    incStream.addEventListener("removetrack", checkTracks);
+    return () => {
+      incStream.removeEventListener("addtrack", checkTracks);
+      incStream.removeEventListener("removetrack", checkTracks);
+    };
+  }, [incStream]);
+  const [incStreamHasVideo, setIncStreamHasVideo] = useState<
+    undefined | boolean
+  >(undefined);
+  useEffect(() => {
+    if (incStreamVideoTracks == undefined) {
+      setIncStreamHasVideo(undefined);
+      return;
+    }
+
+    const checkMuted = () => {
+      setIncStreamHasVideo(incStreamVideoTracks.some((t) => !t.muted));
+
+      console.log(
+        "incStream.videoTracks() muted states:",
+        incStreamVideoTracks.map((t) => t.muted),
+      );
+    };
+    checkMuted();
+
+    incStreamVideoTracks.forEach((t) => {
+      t.addEventListener("mute", checkMuted);
+      t.addEventListener("unmute", checkMuted);
+    });
+    return () => {
+      incStreamVideoTracks.forEach((t) => {
+        t.removeEventListener("mute", checkMuted);
+        t.removeEventListener("unmute", checkMuted);
+      });
+    };
+  }, [incStreamVideoTracks]);
+
   useEffect(() => {
     if (outStream == undefined) {
       return;
@@ -182,9 +234,12 @@ export default function App() {
     }
   }, [state]);
 
-  const inCall = state === "in-call";
+  const showIncVideo = state === "in-call" && incStreamHasVideo;
   const containerStyle = {
-    display: inCall ? "block" : "none",
+    // TODO but this also hides self-video when there is no remote video.
+    // https://github.com/deltachat/calls-webapp/pull/13
+    // is one way to solve that.
+    display: showIncVideo ? "block" : "none",
     height: "100%",
   };
 
@@ -221,7 +276,7 @@ export default function App() {
       </div>
       <div
         style={{
-          display: inCall ? "none" : "flex",
+          display: showIncVideo ? "none" : "flex",
           alignItems: "center",
           textAlign: "center",
           justifyContent: "center",

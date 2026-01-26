@@ -24,6 +24,6 @@
     "vite-plugin-singlefile": "^2.2.0"
   },
   "dependencies": {
-    "preact": "^10.26.9"
+    "preact": "^10.28.2"
   }
 }

@@ -40,6 +40,11 @@ export type CallState =
   | "ringing"
   | "in-call";
 
+type MutedState = {
+  audioEnabled: boolean;
+  videoEnabled: boolean;
+};
+
 export class CallsManager {
   private peerConnection: RTCPeerConnection;
   private setIceServersPromise: Promise<void>;
@@ -48,17 +53,20 @@ export class CallsManager {
 
   resolveCallAcceptedPromise?: (accepted: boolean) => void;
 
+  private mutedStateDataChannel: RTCDataChannel;
   private iceTricklingDataChannel: RTCDataChannel;
   /**
    * Stores local ICE candidates to be sent to the remote peer
    * when the data channel opens.
    */
   private iceTricklingBuffer: Array<RTCIceCandidate | null>;
+  private mutedStateDataChannelOpen: Promise<void>;
 
   constructor(
     private outStreamPromise: Promise<MediaStream>,
     onIncomingStream: (stream: MediaStream) => void,
     private onStateChanged: (state: CallState) => void,
+    onRemoteMutedStateChange: (state: MutedState) => void,
     onIsRelayUsedChange: (relayUsed: null | boolean) => void,
   ) {
     this.peerConnection = new RTCPeerConnection(initialRtcConfiguration);
@@ -118,6 +126,47 @@ export class CallsManager {
       }
       this.iceTricklingBuffer = [];
     };
+
+    this.mutedStateDataChannel = this.peerConnection.createDataChannel(
+      "mutedState",
+      {
+        negotiated: true,
+        id: 3,
+      },
+    );
+    this.mutedStateDataChannel.onmessage = (e) => {
+      console.log("received mutedState from remote peer", e.data);
+
+      const obj = JSON.parse(e.data) as unknown;
+      let videoEnabled, audioEnabled;
+      if (
+        !(
+          typeof obj === "object" &&
+          obj &&
+          "videoEnabled" in obj &&
+          typeof (videoEnabled = obj.videoEnabled) === "boolean" &&
+          "audioEnabled" in obj &&
+          typeof (audioEnabled = obj.audioEnabled) === "boolean"
+        )
+      ) {
+        console.error("remote sent an invalid mutedState message", obj);
+        return;
+      }
+
+      onRemoteMutedStateChange({ audioEnabled, videoEnabled });
+    };
+    this.mutedStateDataChannelOpen = new Promise((resolve, reject) => {
+      this.mutedStateDataChannel.onopen = () => {
+        console.log("mutedStateDataChannel open");
+
+        resolve();
+      };
+      this.mutedStateDataChannel.onclose = () => {
+        console.log("mutedStateDataChannel closed");
+
+        reject("data channel closed");
+      };
+    });
 
     this.peerConnection.ontrack = (e: RTCTrackEvent) => {
       const stream = e.streams[0];
@@ -326,6 +375,21 @@ export class CallsManager {
     window.calls.endCall();
 
     this.resolveCallAcceptedPromise?.(false);
+  }
+
+  async reportMutedStateToRemote(mutedState: MutedState) {
+    if (this.mutedStateDataChannel.readyState === "connecting") {
+      console.log(
+        "Want to report muted state to remote, but data channel is not yet open",
+        mutedState,
+        this.mutedStateDataChannel.readyState,
+      );
+
+      await this.mutedStateDataChannelOpen;
+    }
+    console.log("Sending our muted state to remote peer", mutedState);
+
+    this.mutedStateDataChannel.send(JSON.stringify(mutedState));
   }
 
   getState() {

@@ -45,6 +45,11 @@ export default function App() {
   const isOutVideoEnabledRef = useRef(isOutVideoEnabled);
   isOutVideoEnabledRef.current = isOutVideoEnabled;
 
+  const [remoteReportedMutedState, setRemoteReportedMutedState] = useState<{
+    audioEnabled: boolean;
+    videoEnabled: boolean;
+  } | null>(null);
+
   const [isRelayUsed, setIsRelayUsed] = useState<null | boolean>(null);
 
   const outStreamPromise = useMemo(async () => {
@@ -116,6 +121,7 @@ export default function App() {
       outStreamPromise,
       onIncStream,
       setState,
+      setRemoteReportedMutedState,
       setIsRelayUsed,
     );
   }, [outStreamPromise, disableVideoCompletely]);
@@ -189,6 +195,11 @@ export default function App() {
       outStream
         .getVideoTracks()
         .forEach((t) => (t.enabled = isOutVideoEnabled));
+
+      manager.reportMutedStateToRemote({
+        audioEnabled: isOutAudioEnabled,
+        videoEnabled: isOutVideoEnabled,
+      });
     };
     enableOrDisableTracks();
 
@@ -234,7 +245,24 @@ export default function App() {
     }
   }, [state]);
 
-  const showIncVideo = state === "in-call" && incStreamHasVideo;
+  const showIncVideo =
+    state === "in-call" &&
+    incStreamHasVideo &&
+    // `incStreamHasVideo === true` does not always mean that the remote
+    // is actually sending any non-black frames to us.
+    // Namely `track.enabled = false` makes us send black frames,
+    // but does not set `track.muted === true` on the remote side.
+    // Also, doing `replaceTrack(null)` only sets `track.muted === true`
+    // with a delay of ~1.5s on Chromium 144,
+    // resuling in the last frame you sent to the remote being frozen for them.
+    // On top of that, sometimes `replaceTrack(null)` does not change
+    // `track.muted` on the remote side at all.
+    // See
+    // - https://github.com/deltachat/calls-webapp/issues/62.
+    // - https://github.com/deltachat/calls-webapp/pull/84#issuecomment-3805147182.
+    // - https://github.com/deltachat/calls-webapp/issues/50.
+    (remoteReportedMutedState == undefined ||
+      remoteReportedMutedState.videoEnabled);
   const containerStyle = {
     display: state === "in-call" ? "block" : "none",
     position: "absolute",

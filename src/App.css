@@ -63,10 +63,16 @@ body {
   }
 }
 .acceptCallButton {
+  /* Fallback in case the browser doesn't support CSS variables. */
+  animation: infinite 1.6s pulse-green;
+
   --base-animation-period: calc(60s / var(--ringtone-bpm));
   animation: infinite calc(2 * var(--base-animation-period)) pulse-green;
 }
 .acceptCallButton > * {
+  /* Fallback in case the browser doesn't support CSS variables. */
+  animation: infinite linear 0.8s ringing;
+
   /* Apply this one to the another element,
   so that the `transform`s from the two animations don't override each other. */
   /* Let's not make this depend on `--ringtone-bpm` because it looks ugly

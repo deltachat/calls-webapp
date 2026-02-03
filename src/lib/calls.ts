@@ -49,6 +49,13 @@ export class CallsManager {
   resolveCallAcceptedPromise?: (accepted: boolean) => void;
 
   private iceTricklingDataChannel: RTCDataChannel;
+  private negotiationDataChannel: RTCDataChannel;
+  /**
+   * The fact that the initial message has not been sent
+   * means that we will use the off-band channel for it,
+   * otherwise we will use the {@link negotiationDataChannel}.
+   */
+  private initialSignalingMessageSent: boolean = false;
   /**
    * Stores local ICE candidates to be sent to the remote peer
    * when the data channel opens.
@@ -117,6 +124,67 @@ export class CallsManager {
         sendIceCandidateToDataChannel(this.iceTricklingDataChannel, candidate);
       }
       this.iceTricklingBuffer = [];
+    };
+
+    // TODO we probably need to do ICE trickling over the same data channel,
+    // so that message order is preserved? Or does it matter?
+    //
+    // TODO fix: implement "perfect negotiation", see
+    // https://webrtc.github.io/samples/src/content/peerconnection/perfect-negotiation/
+    this.negotiationDataChannel = this.peerConnection.createDataChannel(
+      "negotiation",
+      {
+        negotiated: true,
+        id: 2,
+      },
+    );
+    this.negotiationDataChannel.onmessage = async (e) => {
+      const desc = new RTCSessionDescription(JSON.parse(e.data));
+      console.log("received remote description over datachannel", desc);
+
+      await this.peerConnection.setRemoteDescription(desc);
+      if (desc.type === "offer") {
+        await this.peerConnection.setLocalDescription();
+        this.negotiationDataChannel.send(
+          JSON.stringify(this.peerConnection.localDescription!.toJSON()),
+        );
+
+        console.log("sent answer over datachannel");
+      }
+    };
+    const negotiationDataChannelOpen = new Promise<void>((resolve, reject) => {
+      this.negotiationDataChannel.onopen = () => {
+        resolve();
+
+        console.log("negotiationDataChannel open");
+      };
+      this.negotiationDataChannel.onclose = () => {
+        reject();
+
+        console.log("negotiationDataChannel closed");
+      };
+    });
+    this.peerConnection.onnegotiationneeded = async () => {
+      // this.negotiationNeeded = true;
+      console.log("onnegotiationneeded");
+      if (!this.initialSignalingMessageSent) {
+        console.log(
+          "onnegotiationneeded, but initial signaling message has not been sent yet",
+        );
+
+        return;
+      }
+
+      Promise.all([
+        negotiationDataChannelOpen,
+        this.peerConnection.setLocalDescription(),
+      ]).then(() => {
+        this.negotiationDataChannel.send(
+          JSON.stringify(this.peerConnection.localDescription!.toJSON()),
+        );
+
+        console.log("onnegotiationneeded, description sent");
+      });
     };
 
     this.peerConnection.ontrack = (e: RTCTrackEvent) => {
@@ -219,6 +287,7 @@ export class CallsManager {
         this.trickleIceOverDataChannel.bind(this);
       logSDP("Answering incoming call with answer:", answer);
       window.calls.acceptCall(answer);
+      this.initialSignalingMessageSent = true;
     };
     const onAnswer = (payload: string) => {
       const answerObject = {
@@ -309,6 +378,7 @@ export class CallsManager {
       this.trickleIceOverDataChannel.bind(this);
     logSDP("Start outgoing call with offer:", offer);
     window.calls.startCall(offer);
+    this.initialSignalingMessageSent = true;
     this.state = "ringing";
     this.onStateChanged(this.state);
   }

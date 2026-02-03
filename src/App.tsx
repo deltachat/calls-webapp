@@ -234,12 +234,12 @@ export default function App() {
     }
   }, [state]);
 
-  const showIncVideo = state === "in-call" && incStreamHasVideo;
+  const showIncVideo = false;//state === "in-call" && incStreamHasVideo;
   const containerStyle = {
-    // TODO but this also hides self-video when there is no remote video.
-    // https://github.com/deltachat/calls-webapp/pull/13
-    // is one way to solve that.
-    display: showIncVideo ? "block" : "none",
+    display: state === "in-call" ? "block" : "none",
+    position: "absolute",
+    top: 0,
+    width: "100%",
     height: "100%",
   };
 
@@ -258,7 +258,7 @@ export default function App() {
   return (
     <div style={{ height: "100vh", overflow: "hidden" }}>
       <div style={containerStyle}>
-        <FullscreenVideo mediaStream={incStream} />
+        <FullscreenVideo mediaStream={incStream} style={{display: showIncVideo ? "block" : "none"}} />
         <VideoThumbnail videoRef={outVidRef} />
       </div>
 

@@ -8,10 +8,12 @@ const containerStyle = {
 
 interface Props {
   mediaStream: MediaStream | null;
+  [key: string]: any;
 }
 
-export default function FullscreenVideo({ mediaStream }: Props) {
+export default function FullscreenVideo({ mediaStream, ...props }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  props.style = {...containerStyle, ...(props.style || {})};
 
   useEffect(() => {
     if (videoRef.current == null) {
@@ -46,7 +48,7 @@ export default function FullscreenVideo({ mediaStream }: Props) {
   }, [mediaStream, videoRef]);
 
   return (
-    <div style={containerStyle}>
+    <div {...props}>
       <video
         poster="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="
         width="100%"

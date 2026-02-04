@@ -234,14 +234,17 @@ export default function App() {
     }
   }, [state]);
 
-  const showIncVideo = false;//state === "in-call" && incStreamHasVideo;
+  const showIncVideo = state === "in-call" && incStreamHasVideo;
   const containerStyle = {
     display: state === "in-call" ? "block" : "none",
     position: "absolute",
     top: 0,
     width: "100%",
+    // Otherwise there is vertical scroll. IDK if this is right,
+    // but does the job.
+    overflow: "hidden",
     height: "100%",
-  };
+  } as const;
 
   const toggleAudioLabel = isOutAudioEnabled
     ? "Mute microphone"
@@ -258,7 +261,7 @@ export default function App() {
   return (
     <div style={{ height: "100vh", overflow: "hidden" }}>
       <div style={containerStyle}>
-        <FullscreenVideo mediaStream={incStream} style={{display: showIncVideo ? "block" : "none"}} />
+        <FullscreenVideo mediaStream={incStream} hide={!showIncVideo} />
         <VideoThumbnail videoRef={outVidRef} />
       </div>
 

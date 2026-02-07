@@ -61,9 +61,19 @@ export default function App() {
       });
     } catch (error) {
       console.warn("Failed to getUserMedia with video, will try just audio");
-      stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-      });
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+        });
+      } catch (error) {
+        console.error(
+          "Failed to getUserMedia, we have no camera and no mic. Will proceed with an empty outgoing MediaStream",
+          error,
+        );
+        // It makes sense to proceed, because maybe the users are fine
+        // with one of them not having video or audio.
+        stream = new MediaStream();
+      }
     }
 
     // Make sure to set the initial `enabled` values
@@ -211,6 +221,8 @@ export default function App() {
     };
   }, [outStream, isOutAudioEnabled, isOutVideoEnabled]);
 
+  const outStreamHasAudioTrack =
+    outStream == undefined || outStream.getAudioTracks().length >= 1;
   const outStreamHasVideoTrack =
     !disableVideoCompletely &&
     (outStream == undefined || outStream.getVideoTracks().length >= 1);
@@ -274,9 +286,10 @@ export default function App() {
     height: "100%",
   } as const;
 
-  const toggleAudioLabel = isOutAudioEnabled
-    ? "Mute microphone"
-    : "Unmute microphone";
+  const toggleAudioLabel =
+    isOutAudioEnabled && outStreamHasAudioTrack
+      ? "Mute microphone"
+      : "Unmute microphone";
   const toggleVideoLabel = isOutVideoEnabled ? "Stop camera" : "Start camera";
 
   const buttonsStyle = {
@@ -343,10 +356,13 @@ export default function App() {
         <Button
           aria-label={toggleAudioLabel}
           title={toggleAudioLabel}
+          disabled={!outStreamHasAudioTrack}
           onClick={() => setIsOutAudioEnabled((v) => !v)}
           style={buttonsStyle}
         >
-          {isOutAudioEnabled ? (
+          {/* TODO `isOutAudioEnabled` should never be `true`
+          if `outStreamHasAudioTrack === false`? */}
+          {isOutAudioEnabled && outStreamHasAudioTrack ? (
             <MaterialSymbolsMic />
           ) : (
             <MaterialSymbolsMicOff />

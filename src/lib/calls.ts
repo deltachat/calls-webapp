@@ -171,17 +171,30 @@ export class CallsManager {
     this.peerConnection.ontrack = (e: RTCTrackEvent) => {
       const stream = e.streams[0];
       onIncomingStream(stream);
-      this.state = "in-call";
-      this.onStateChanged(this.state);
     };
+
+    this.peerConnection.addEventListener("connectionstatechange", () => {
+      console.log(
+        "onconnectionstatechange",
+        this.peerConnection.connectionState,
+      );
+
+      // TODO fix: the remote party might maliciously keep `connectionState`
+      // at "connecting" while already receiving our media,
+      // making an impression that the call has not started.
+      if (this.peerConnection.connectionState === "connected") {
+        this.state = "in-call";
+        this.onStateChanged(this.state);
+      }
+    });
 
     // Print the selected candidate pair(s), for debugging,
     // and invoke `onRelayUsageChange`.
-    const connectionstatechangeListener = () => {
+    const connectionstatechangeListener2 = () => {
       if (this.peerConnection.connectionState === "connected") {
         this.peerConnection.removeEventListener(
           "connectionstatechange",
-          connectionstatechangeListener,
+          connectionstatechangeListener2,
         );
 
         // `setTimeout` for things to settle.
@@ -237,7 +250,7 @@ export class CallsManager {
     };
     this.peerConnection.addEventListener(
       "connectionstatechange",
-      connectionstatechangeListener,
+      connectionstatechangeListener2,
     );
 
     const acceptCall = async (payload: string) => {

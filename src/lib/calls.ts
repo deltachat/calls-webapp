@@ -342,6 +342,16 @@ export class CallsManager {
   }
 
   async startCall(): Promise<void> {
+    // Make sure to add both audio and video transceivers,
+    // regardless of whether we have both camera and mic
+    // (i.e. whether we do `pc.addTrack(outStreamVideoTrack, outStream)`),
+    // because otherwise e.g. if we don't have camera but the remove peer does,
+    // then we would need another round of negotiation,
+    // but as of writing we can only do one.
+    // See https://github.com/deltachat/calls-webapp/issues/90.
+    this.peerConnection.addTransceiver("video", { direction: "sendrecv" });
+    this.peerConnection.addTransceiver("audio", { direction: "sendrecv" });
+
     await this.setIceServersPromise;
     const gatheredEnoughIceP = gatheredEnoughIce(this.peerConnection);
     const outStream = await this.outStreamPromise;

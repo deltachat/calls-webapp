@@ -56,7 +56,11 @@ export default function App() {
     let stream: MediaStream;
     try {
       stream = await navigator.mediaDevices.getUserMedia({
-        video: !disableVideoCompletely,
+        video: disableVideoCompletely
+          ? false
+          : {
+              facingMode: { ideal: "user" },
+            },
         audio: true,
       });
     } catch (error) {

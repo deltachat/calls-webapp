@@ -11,7 +11,7 @@ interface Props {
 }
 
 export default function EndCallButton({ ...props }: Props) {
-  props.style = { ...containerStyle, ...(props.style || {}) };
+  props.style = { ...(props.style || {}), ...containerStyle };
   return (
     <Button
       aria-label="End call"

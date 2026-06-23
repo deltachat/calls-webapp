@@ -281,6 +281,9 @@ export default function App() {
 
   const buttonsStyle = {
     color: "white",
+    // Copy-pasted from Chromium dark theme.
+    // Default color, can be overridden.
+    backgroundColor: "rgb(107, 107, 107)",
     borderRadius: "50%",
     fontSize: "1.5em",
     margin: "0.25em 0.625em",
@@ -373,8 +376,8 @@ export default function App() {
             onClick={acceptCall}
             className="acceptCallButton"
             style={{
-              backgroundColor: "#00b000",
               ...buttonsStyle,
+              backgroundColor: "#00b000",
             }}
           >
             <MaterialSymbolsCall />

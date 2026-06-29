@@ -264,7 +264,6 @@ export default function App() {
     (remoteReportedMutedState == undefined ||
       remoteReportedMutedState.videoEnabled);
   const containerStyle = {
-    display: state === "in-call" ? "block" : "none",
     position: "absolute",
     top: 0,
     width: "100%",
@@ -293,20 +292,30 @@ export default function App() {
     <div style={{ height: "100vh", overflow: "hidden" }}>
       <div style={containerStyle}>
         <FullscreenVideo mediaStream={incStream} hide={!showIncVideo} />
-        <VideoThumbnail videoRef={outVidRef} />
       </div>
 
       <div
-        role="status"
         style={{
           position: "absolute",
           top: 0,
           width: "100%",
-          paddingTop: "1em",
-          textAlign: "center",
         }}
       >
-        {status}
+        <div role="status">
+          {state !== "in-call" && (
+            <div
+              style={{
+                width: "100%",
+                paddingTop: "1em",
+                textAlign: "center",
+              }}
+            >
+              {status}
+            </div>
+          )}
+        </div>
+
+        <VideoThumbnail videoRef={outVidRef} />
       </div>
       <div
         style={{

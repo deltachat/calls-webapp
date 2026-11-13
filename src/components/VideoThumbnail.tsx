@@ -2,7 +2,7 @@ const containerStyle = {
   position: "absolute" as "absolute",
   right: "15px",
   top: "15px",
-  height: "100px",
+  width: "max(128px, 20vw)",
   zIndex: 1,
   imageRendering: "crisp-edges" as "crisp-edges",
   borderRadius: "5px",
@@ -23,7 +23,7 @@ export default function VideoThumbnail({ videoRef }: Props) {
           borderRadius: "5px",
           transform: "scaleX(-1)",
         }}
-        height="100%"
+        width="100%"
         muted
         autoPlay
         playsInline

@@ -5,7 +5,7 @@ const containerStyle = {
 
   float: "right" as const,
   margin: "15px",
-  height: "100px",
+  width: "max(128px, 20vw)",
   borderRadius: "5px",
   boxShadow:
     "rgba(0, 0, 0, 0.29) 0px 2px 8px 0px, rgba(0, 0, 0, 0.28) 0px 2px 8px 0px",
@@ -24,7 +24,7 @@ export default function VideoThumbnail({ videoRef }: Props) {
           borderRadius: "5px",
           transform: "scaleX(-1)",
         }}
-        height="100%"
+        width="100%"
         muted
         autoPlay
         playsInline

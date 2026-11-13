@@ -57,6 +57,7 @@ To integrate into your Delta Chat client you need to provide a
 - `endCall: () => void` (implementation must call `dc_end_call` chatmail core API)
 - `getIceServers: () => string | Promise<string>` (returns a JSON string with array of ice server configurations as expected by https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/setConfiguration)
 - `getAvatar: () => string` (returning the chat's avatar image URL; can be a regular URL or a data-URL, ex. `"data:image/png;base64,..."`)
+- `isScreenShareSupported?: () => boolean` (optional; return `true` to show the "Share screen" button. Only do this if `navigator.mediaDevices.getDisplayMedia()` works in your WebView. The shared screen replaces the camera video)
 
 Commands are given to the app via URL hash:
 

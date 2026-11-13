@@ -357,8 +357,8 @@ export default function App() {
         </Button>
         {/* If `enableVideoInitially`, which is the case for calls
         that have been started as video (and not only-audio) calls,
-        then we want to make it clear to the user
-        that they can't enable the camera. */}
+        then if the camera is not working
+        we want to make it clear to the user. */}
         {(outStreamHasVideoTrack || enableVideoInitially) && (
           <Button
             aria-label={toggleVideoLabel}

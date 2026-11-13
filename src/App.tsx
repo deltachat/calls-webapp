@@ -280,7 +280,10 @@ export default function App() {
   const toggleAudioLabel = isOutAudioEnabled
     ? "Mute microphone"
     : "Unmute microphone";
-  const toggleVideoLabel = isOutVideoEnabled ? "Stop camera" : "Start camera";
+  const toggleVideoLabel =
+    isOutVideoEnabled && outStreamHasVideoTrack
+      ? "Stop camera"
+      : "Start camera";
 
   const buttonsStyle = {
     color: "white",
@@ -368,14 +371,21 @@ export default function App() {
             <MaterialSymbolsMicOff />
           )}
         </Button>
-        {outStreamHasVideoTrack && (
+        {/* If `enableVideoInitially`, which is the case for calls
+        that have been started as video (and not only-audio) calls,
+        then if the camera is not working
+        we want to make it clear to the user. */}
+        {(outStreamHasVideoTrack || enableVideoInitially) && (
           <Button
             aria-label={toggleVideoLabel}
             title={toggleVideoLabel}
+            disabled={!outStreamHasVideoTrack}
             onClick={() => setIsOutVideoEnabled((v) => !v)}
             style={buttonsStyle}
           >
-            {isOutVideoEnabled ? (
+            {/* TODO `isOutVideoEnabled` should never be `true`
+            if `outStreamHasVideoTrack === false`? */}
+            {isOutVideoEnabled && outStreamHasVideoTrack ? (
               <MaterialSymbolsVideocam />
             ) : (
               <MaterialSymbolsVideocamOff />

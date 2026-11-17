@@ -14,7 +14,6 @@ import MaterialSymbolsVideocamOff from "~icons/material-symbols/videocam-off";
 import MaterialSymbolsMic from "~icons/material-symbols/mic";
 import MaterialSymbolsMicOff from "~icons/material-symbols/mic-off";
 import MaterialSymbolsScreenShare from "~icons/material-symbols/screen-share";
-import MaterialSymbolsStopScreenShare from "~icons/material-symbols/stop-screen-share";
 
 import "./App.css";
 
@@ -276,6 +275,10 @@ export default function App() {
         return;
       }
       setScreenStream(stream);
+      // Camera and screen are mutually exclusive video sources.
+      // Turn the camera off, so that it doesn't come back
+      // when screen sharing stops, and its light doesn't stay on.
+      setIsOutVideoEnabled(false);
     } finally {
       isStartingScreenShareRef.current = false;
     }
@@ -286,8 +289,9 @@ export default function App() {
       return;
     }
     setScreenStream(null);
-    // The camera track keeps its `enabled` state,
-    // so this does not turn the camera on if it was off.
+    // The camera track keeps its `enabled` state
+    // (off, unless the user clicked "Start camera" to stop sharing),
+    // so this does not turn the camera on by itself.
     const cameraTrack = outStream?.getVideoTracks()[0] ?? null;
     try {
       await manager.replaceOutgoingVideoTrack(cameraTrack);
@@ -467,7 +471,16 @@ export default function App() {
           <Button
             aria-label={toggleVideoLabel}
             title={toggleVideoLabel}
-            onClick={() => setIsOutVideoEnabled((v) => !v)}
+            onClick={() => {
+              if (isScreenSharing) {
+                // The camera is off while sharing, so this starts it,
+                // replacing the screen.
+                stopScreenShare();
+                setIsOutVideoEnabled(true);
+                return;
+              }
+              setIsOutVideoEnabled((v) => !v);
+            }}
             style={buttonsStyle}
           >
             {isOutVideoEnabled ? (
@@ -482,13 +495,20 @@ export default function App() {
             aria-label={toggleScreenShareLabel}
             title={toggleScreenShareLabel}
             onClick={isScreenSharing ? stopScreenShare : startScreenShare}
-            style={buttonsStyle}
+            style={
+              isScreenSharing
+                ? {
+                    ...buttonsStyle,
+                    // Highlighted while active. The icon is not crossed out,
+                    // because for the other buttons a crossed-out icon
+                    // means "off, click to turn on".
+                    color: "black",
+                    backgroundColor: "white",
+                  }
+                : buttonsStyle
+            }
           >
-            {isScreenSharing ? (
-              <MaterialSymbolsStopScreenShare />
-            ) : (
-              <MaterialSymbolsScreenShare />
-            )}
+            <MaterialSymbolsScreenShare />
           </Button>
         )}
         {acceptCall != null && (

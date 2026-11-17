@@ -277,7 +277,6 @@ export default function App() {
       setScreenStream(stream);
       // Camera and screen are mutually exclusive video sources.
       // Turn the camera off, so that it doesn't come back
-      // when screen sharing stops, and its light doesn't stay on.
       setIsOutVideoEnabled(false);
     } finally {
       isStartingScreenShareRef.current = false;

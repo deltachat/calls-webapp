@@ -481,7 +481,6 @@ export default function App() {
           <Button
             aria-label={toggleScreenShareLabel}
             title={toggleScreenShareLabel}
-            aria-pressed={isScreenSharing}
             onClick={isScreenSharing ? stopScreenShare : startScreenShare}
             style={buttonsStyle}
           >

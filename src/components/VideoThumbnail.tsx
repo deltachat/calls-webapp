@@ -7,7 +7,6 @@ const containerStyle = {
   margin: "15px",
   height: "100px",
   width: "100px",
-  imageRendering: "crisp-edges" as "crisp-edges",
   borderRadius: "5px",
   boxShadow:
     "rgba(0, 0, 0, 0.29) 0px 2px 8px 0px, rgba(0, 0, 0, 0.28) 0px 2px 8px 0px",

@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
 const containerStyle = {
-  imageRendering: "crisp-edges" as "crisp-edges",
   width: "100%",
   height: "100%",
 };

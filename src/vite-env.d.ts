@@ -8,6 +8,7 @@ declare global {
       endCall: () => void;
       getIceServers: () => string | Promise<string>;
       getAvatar: () => string;
+      isScreenShareSupported?: () => boolean;
     };
   }
 }

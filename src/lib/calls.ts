@@ -61,6 +61,7 @@ export class CallsManager {
    */
   private iceTricklingBuffer: Array<RTCIceCandidate | null>;
   private mutedStateDataChannelOpen: Promise<void>;
+  private videoTransceiver?: RTCRtpTransceiver;
 
   constructor(
     private outStreamPromise: Promise<MediaStream>,
@@ -68,6 +69,11 @@ export class CallsManager {
     private onStateChanged: (state: CallState) => void,
     onRemoteMutedStateChange: (state: MutedState) => void,
     onIsRelayUsedChange: (relayUsed: null | boolean) => void,
+    /**
+     * Whether we want to be able to send video
+     * even if we don't have a camera, e.g. to share the screen.
+     */
+    private canSendVideoWithoutCamera: boolean = false,
   ) {
     this.peerConnection = new RTCPeerConnection(initialRtcConfiguration);
 
@@ -252,12 +258,28 @@ export class CallsManager {
         sdp: payload,
       } as RTCSessionDescriptionInit;
       const offerDescription = new RTCSessionDescription(offerObject);
-      this.peerConnection.setRemoteDescription(offerDescription);
+      const setRemoteDescriptionP =
+        this.peerConnection.setRemoteDescription(offerDescription);
       const outStream = await outStreamPromise;
       console.log("getUserMedia() completed");
+      // `addTrack` must reuse the transceivers created from the offer.
+      await setRemoteDescriptionP;
       outStream
         .getTracks()
         .forEach((track) => this.peerConnection.addTrack(track, outStream));
+      this.videoTransceiver = this.peerConnection
+        .getTransceivers()
+        .find((t) => t.receiver.track.kind === "video");
+      if (
+        this.canSendVideoWithoutCamera &&
+        this.videoTransceiver != undefined &&
+        this.videoTransceiver.sender.track == null
+      ) {
+        // Otherwise the answer would say "recvonly" for video,
+        // and we couldn't start sending video later without renegotiation.
+        this.videoTransceiver.direction = "sendrecv";
+        this.videoTransceiver.sender.setStreams(outStream);
+      }
       this.peerConnection.setLocalDescription(
         await this.peerConnection.createAnswer(),
       );
@@ -349,7 +371,9 @@ export class CallsManager {
     // then we would need another round of negotiation,
     // but as of writing we can only do one.
     // See https://github.com/deltachat/calls-webapp/issues/90.
-    this.peerConnection.addTransceiver("video", { direction: "sendrecv" });
+    this.videoTransceiver = this.peerConnection.addTransceiver("video", {
+      direction: "sendrecv",
+    });
     this.peerConnection.addTransceiver("audio", { direction: "sendrecv" });
 
     await this.setIceServersPromise;
@@ -359,6 +383,14 @@ export class CallsManager {
     outStream
       .getTracks()
       .forEach((track) => this.peerConnection.addTrack(track, outStream));
+    if (
+      this.canSendVideoWithoutCamera &&
+      this.videoTransceiver.sender.track == null
+    ) {
+      // Without this the remote would receive our video track
+      // without a stream, and thus wouldn't display it.
+      this.videoTransceiver.sender.setStreams(outStream);
+    }
     this.peerConnection.setLocalDescription(
       await this.peerConnection.createOffer(),
     );
@@ -400,6 +432,18 @@ export class CallsManager {
     console.log("Sending our muted state to remote peer", mutedState);
 
     this.mutedStateDataChannel.send(JSON.stringify(mutedState));
+  }
+
+  /**
+   * Replace the video track that we send to the remote,
+   * without renegotiation.
+   * `null` stops sending video.
+   */
+  async replaceOutgoingVideoTrack(track: MediaStreamTrack | null) {
+    if (this.videoTransceiver == undefined) {
+      throw new Error("cannot replace video track: no video transceiver yet");
+    }
+    await this.videoTransceiver.sender.replaceTrack(track);
   }
 
   getState() {

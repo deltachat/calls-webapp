@@ -13,6 +13,7 @@ import MaterialSymbolsVideocam from "~icons/material-symbols/videocam";
 import MaterialSymbolsVideocamOff from "~icons/material-symbols/videocam-off";
 import MaterialSymbolsMic from "~icons/material-symbols/mic";
 import MaterialSymbolsMicOff from "~icons/material-symbols/mic-off";
+import MaterialSymbolsScreenShare from "~icons/material-symbols/screen-share";
 
 import "./App.css";
 
@@ -35,6 +36,17 @@ export default function App() {
     );
   }
   const enableVideoInitially = enableVideoInitiallyRef.current;
+
+  // Evaluate only once: `CallsManager` is (re)created whenever this changes,
+  // which would break the ongoing call.
+  const screenShareSupportedRef = useRef<boolean | null>(null);
+  if (screenShareSupportedRef.current == null) {
+    screenShareSupportedRef.current =
+      !disableVideoCompletely &&
+      window.calls.isScreenShareSupported?.() === true &&
+      typeof navigator.mediaDevices?.getDisplayMedia === "function";
+  }
+  const screenShareSupported = screenShareSupportedRef.current;
 
   const [isOutAudioEnabled, setIsOutAudioEnabled] = useState(true);
   const [isOutVideoEnabled_, setIsOutVideoEnabled] =
@@ -101,12 +113,16 @@ export default function App() {
     };
   }, [outStreamPromise]);
 
+  const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
+  const isScreenSharing = screenStream != null;
+
+  const localPreviewStream = screenStream ?? outStream;
   if (
-    outStream &&
+    localPreviewStream &&
     outVidRef.current &&
-    outVidRef.current.srcObject !== outStream
+    outVidRef.current.srcObject !== localPreviewStream
   ) {
-    outVidRef.current.srcObject = outStream;
+    outVidRef.current.srcObject = localPreviewStream;
   }
 
   const [incStream, setIncStream] = useState<MediaStream | null>(null);
@@ -130,8 +146,9 @@ export default function App() {
       setState,
       setRemoteReportedMutedState,
       setIsRelayUsed,
+      screenShareSupported,
     );
-  }, [outStreamPromise, disableVideoCompletely]);
+  }, [outStreamPromise, disableVideoCompletely, screenShareSupported]);
 
   useEffect(() => {
     // For debugging.
@@ -205,7 +222,12 @@ export default function App() {
 
       manager.reportMutedStateToRemote({
         audioEnabled: isOutAudioEnabled,
-        videoEnabled: isOutVideoEnabled,
+        // Without a camera `isOutVideoEnabled` can still be `true`,
+        // but then we are not sending any video, e.g. after screen sharing
+        // has stopped. The remote should not show our last frame.
+        videoEnabled:
+          (isOutVideoEnabled && outStream.getVideoTracks().length > 0) ||
+          isScreenSharing,
       });
     };
     enableOrDisableTracks();
@@ -216,7 +238,77 @@ export default function App() {
       outStream.removeEventListener("addtrack", enableOrDisableTracks);
       outStream.removeEventListener("removetrack", enableOrDisableTracks);
     };
-  }, [outStream, isOutAudioEnabled, isOutVideoEnabled]);
+  }, [outStream, isOutAudioEnabled, isOutVideoEnabled, isScreenSharing]);
+
+  // Prevents opening a second picker while the first one is still open,
+  // which would leave the first screen capture running with no way to stop it.
+  const isStartingScreenShareRef = useRef(false);
+  const startScreenShare = useCallback(async () => {
+    if (isStartingScreenShareRef.current) {
+      return;
+    }
+    isStartingScreenShareRef.current = true;
+    try {
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getDisplayMedia({
+          video: true,
+          audio: false,
+        });
+      } catch (error) {
+        // Also happens when the user cancels the picker.
+        console.warn("getDisplayMedia failed", error);
+        return;
+      }
+      const [track] = stream.getVideoTracks();
+      if (track == undefined) {
+        stream.getTracks().forEach((t) => t.stop());
+        return;
+      }
+      // Prefer sharpness over smoothness, e.g. for text.
+      track.contentHint = "detail";
+      try {
+        await manager.replaceOutgoingVideoTrack(track);
+      } catch (error) {
+        console.error("Failed to start sending the screen", error);
+        stream.getTracks().forEach((t) => t.stop());
+        return;
+      }
+      setScreenStream(stream);
+      // Camera and screen are mutually exclusive video sources.
+      // Turn the camera off, so that it doesn't come back
+      setIsOutVideoEnabled(false);
+    } finally {
+      isStartingScreenShareRef.current = false;
+    }
+  }, [manager]);
+
+  const stopScreenShare = useCallback(async () => {
+    if (screenStream == null) {
+      return;
+    }
+    setScreenStream(null);
+    // The camera track keeps its `enabled` state
+    // (off, unless the user clicked "Start camera" to stop sharing),
+    // so this does not turn the camera on by itself.
+    const cameraTrack = outStream?.getVideoTracks()[0] ?? null;
+    try {
+      await manager.replaceOutgoingVideoTrack(cameraTrack);
+    } catch (error) {
+      console.error("Failed to switch back to the camera", error);
+    }
+    screenStream.getTracks().forEach((t) => t.stop());
+  }, [manager, outStream, screenStream]);
+
+  // E.g. the user clicked "Stop sharing" in the browser or OS UI.
+  useEffect(() => {
+    const track = screenStream?.getVideoTracks()[0];
+    if (track == undefined) {
+      return;
+    }
+    track.addEventListener("ended", stopScreenShare);
+    return () => track.removeEventListener("ended", stopScreenShare);
+  }, [screenStream, stopScreenShare]);
 
   const outStreamHasVideoTrack =
     !disableVideoCompletely &&
@@ -284,6 +376,9 @@ export default function App() {
     ? "Mute microphone"
     : "Unmute microphone";
   const toggleVideoLabel = isOutVideoEnabled ? "Stop camera" : "Start camera";
+  const toggleScreenShareLabel = isScreenSharing
+    ? "Stop sharing screen"
+    : "Share screen";
 
   const buttonsStyle = {
     color: "white",
@@ -322,7 +417,7 @@ export default function App() {
           )}
         </div>
 
-        <VideoThumbnail videoRef={outVidRef} />
+        <VideoThumbnail videoRef={outVidRef} isScreen={isScreenSharing} />
       </div>
       <div
         style={{
@@ -375,7 +470,16 @@ export default function App() {
           <Button
             aria-label={toggleVideoLabel}
             title={toggleVideoLabel}
-            onClick={() => setIsOutVideoEnabled((v) => !v)}
+            onClick={() => {
+              if (isScreenSharing) {
+                // The camera is off while sharing, so this starts it,
+                // replacing the screen.
+                stopScreenShare();
+                setIsOutVideoEnabled(true);
+                return;
+              }
+              setIsOutVideoEnabled((v) => !v);
+            }}
             style={buttonsStyle}
           >
             {isOutVideoEnabled ? (
@@ -383,6 +487,27 @@ export default function App() {
             ) : (
               <MaterialSymbolsVideocamOff />
             )}
+          </Button>
+        )}
+        {screenShareSupported && state === "in-call" && (
+          <Button
+            aria-label={toggleScreenShareLabel}
+            title={toggleScreenShareLabel}
+            onClick={isScreenSharing ? stopScreenShare : startScreenShare}
+            style={
+              isScreenSharing
+                ? {
+                    ...buttonsStyle,
+                    // Highlighted while active. The icon is not crossed out,
+                    // because for the other buttons a crossed-out icon
+                    // means "off, click to turn on".
+                    color: "black",
+                    backgroundColor: "white",
+                  }
+                : buttonsStyle
+            }
+          >
+            <MaterialSymbolsScreenShare />
           </Button>
         )}
         {acceptCall != null && (

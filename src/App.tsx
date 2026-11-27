@@ -17,6 +17,12 @@ import MaterialSymbolsScreenShare from "~icons/material-symbols/screen-share";
 
 import "./App.css";
 
+const search = new URLSearchParams(location.search);
+const ringtoneBpm = search.get("ringtoneBpm");
+if (ringtoneBpm) {
+  document.documentElement.style.setProperty("--ringtone-bpm", ringtoneBpm);
+}
+
 export default function App() {
   const [state, setState] = useState<CallState>(CallsManager.initialState);
   const outVidRef = useRef<HTMLVideoElement | null>(null);

@@ -6,7 +6,6 @@
     "lib": ["ES2017", "DOM", "DOM.Iterable"],
     "skipLibCheck": true,
 
-    "baseUrl": ".",
     "paths": {
       "~/*": ["./src/*"]
     },

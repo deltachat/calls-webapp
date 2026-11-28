@@ -9,21 +9,21 @@
     "build": "tsc && vite build"
   },
   "devDependencies": {
-    "@iconify/json": "^2.2.350",
-    "@preact/preset-vite": "^2.10.1",
+    "@iconify/json": "^2.2.562",
+    "@preact/preset-vite": "^2.10.6",
     "@svgr/core": "^8.1.0",
     "@svgr/plugin-jsx": "^8.1.0",
-    "@types/react": "^19.1.8",
+    "@types/react": "^19.3.3",
     "@webxdc/vite-plugins": "latest",
     "@webxdc/webxdc-dev": "latest",
-    "concurrently": "^9.1.2",
+    "concurrently": "^10.0.7",
     "prettier": "latest",
     "typescript": "latest",
-    "unplugin-icons": "^22.1.0",
+    "unplugin-icons": "^24.0.0",
     "vite": "latest",
-    "vite-plugin-singlefile": "^2.2.0"
+    "vite-plugin-singlefile": "^2.3.4"
   },
   "dependencies": {
-    "preact": "^10.28.2"
+    "preact": "^11.2.0"
   }
 }

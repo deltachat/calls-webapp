@@ -35,10 +35,7 @@ const initialRtcConfiguration = {
 } as RTCConfiguration;
 
 export type CallState =
-  | "promptingUserToAcceptCall"
-  | "connecting"
-  | "ringing"
-  | "in-call";
+  "promptingUserToAcceptCall" | "connecting" | "ringing" | "in-call";
 
 type MutedState = {
   audioEnabled: boolean;
@@ -145,16 +142,14 @@ export class CallsManager {
 
       const obj = JSON.parse(e.data) as unknown;
       let videoEnabled, audioEnabled;
-      if (
-        !(
-          typeof obj === "object" &&
-          obj &&
-          "videoEnabled" in obj &&
-          typeof (videoEnabled = obj.videoEnabled) === "boolean" &&
-          "audioEnabled" in obj &&
-          typeof (audioEnabled = obj.audioEnabled) === "boolean"
-        )
-      ) {
+      if (!(
+        typeof obj === "object" &&
+        obj &&
+        "videoEnabled" in obj &&
+        typeof (videoEnabled = obj.videoEnabled) === "boolean" &&
+        "audioEnabled" in obj &&
+        typeof (audioEnabled = obj.audioEnabled) === "boolean"
+      )) {
         console.error("remote sent an invalid mutedState message", obj);
         return;
       }

@@ -3,7 +3,7 @@ import { eruda, mockWebxdc } from "@webxdc/vite-plugins";
 import preact from "@preact/preset-vite";
 import Icons from "unplugin-icons/vite";
 import { viteSingleFile } from "vite-plugin-singlefile";
-import injectVersion from "./vite-plugins/inject-version";
+import injectVersion from "./vite-plugins/inject-version.ts";
 
 import { defineConfig } from "vite";
 import path from "path";
@@ -20,7 +20,7 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      "~": path.resolve(__dirname, "./src"),
+      "~": path.resolve(import.meta.dirname, "./src"),
     },
   },
 });

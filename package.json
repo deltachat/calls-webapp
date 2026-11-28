@@ -1,5 +1,6 @@
 {
-  "private": true,
+  "name": "@deltachat/calls-webapp",
+  "version": "1.0.1",
   "type": "module",
   "scripts": {
     "vite": "vite --port 3000",
@@ -8,6 +9,9 @@
     "check": "tsc && prettier --check .",
     "build": "tsc && vite build"
   },
+  "files": [
+    "dist"
+  ],
   "devDependencies": {
     "@iconify/json": "^2.2.562",
     "@preact/preset-vite": "^2.10.6",
